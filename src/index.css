@@ -1,16 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap');
 
-@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Manrope:wght@300;400;500;600&display=swap');
+/* =================================
+   GLOBAL STYLES & VARIABLES
+================================= */
 
 :root {
   font-family: 'Manrope', sans-serif;
-  color: #fff0d9;
+  color: #F4EBDD;
   background: #050302;
+
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+
+  --color-gold: #D4A94F;
+  --color-amber: #F3C66B;
+  --color-ivory: #F4EBDD;
+  --color-burgundy: #241416;
 }
 
-* {
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
@@ -20,30 +31,115 @@ html,
 body,
 #root {
   width: 100%;
-  height: 100%;
+  min-height: 100%;
+  margin: 0;
+}
+
+html {
+  overflow-x: hidden;
+  overflow-y: auto;
+  scroll-behavior: smooth;
 }
 
 body {
-  min-width: 320px;
-  min-height: 100vh;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #050302;
 }
 
-/* Main scene */
+#root {
+  min-height: 100vh;
+}
 
-.scene1 {
+/* =================================
+   EXPERIENCE CONTAINER & SECTIONS
+================================= */
+
+.experience {
+  position: relative;
+  width: 100%;
+  min-height: 100%;
+  background: #050302;
+  overflow-x: hidden;
+}
+
+/* Each scene takes a full viewport height and stacks normally */
+.scene-section {
   position: relative;
   width: 100%;
   height: 100vh;
   height: 100svh;
+  overflow: hidden;
+}
+
+.scene1-section {
+  background: #050302;
+}
+
+/* Smooth dark fade at the bottom of Scene 1 */
+.scene1-section::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(to bottom, transparent, #050302);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.scene2-section {
+  background: #080604;
+  /* Smooth entrance animation when Scene 2 enters the viewport */
+  animation: sceneEnter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-timeline: view();
+  animation-range: entry 0% cover 30%;
+}
+
+/* Smooth dark fade at the top of Scene 2 */
+.scene2-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 150px;
+  background: linear-gradient(to top, transparent, #080604);
+  pointer-events: none;
+  z-index: 10;
+}
+
+.greeting-section {
+  height: auto;
+  min-height: 100vh;
+}
+
+@keyframes sceneEnter {
+  from {
+    opacity: 0;
+    transform: translateY(40px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* =================================
+   SCENE 1 — TEMPLE
+================================= */
+
+.scene1 {
+  position: relative;
+  width: 100%;
+  height: 100%;
   min-height: 600px;
   overflow: hidden;
   isolation: isolate;
   background: #050302;
   color: #fff0d9;
 }
-
-/* Dark temple background */
 
 .scene1-background {
   position: absolute;
@@ -67,14 +163,11 @@ body {
     opacity: 0;
     transform: scale(1.12);
   }
-
   100% {
     opacity: 1;
     transform: scale(1.02);
   }
 }
-
-/* Subtle cinematic shading — no heavy black rectangle */
 
 .scene1-vignette {
   position: absolute;
@@ -92,8 +185,6 @@ body {
     );
 }
 
-/* Transparent 3D layer */
-
 .scene1-canvas {
   position: absolute;
   inset: 0;
@@ -106,8 +197,6 @@ body {
   width: 100% !important;
   height: 100% !important;
 }
-
-/* Main heading */
 
 .scene1-title {
   position: absolute;
@@ -146,20 +235,6 @@ body {
   letter-spacing: 0.18em;
 }
 
-/* Background reveal */
-
-@keyframes templeReveal {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-/* Mobile */
-
 @media (max-width: 600px) {
   .scene1-title {
     top: 8%;
@@ -177,4 +252,33 @@ body {
   .scene1-title p:last-child {
     font-size: 9px;
   }
+}
+
+/* =================================
+   SCENE 2 — RANGOLI
+================================= */
+
+.scene2 {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080604;
+}
+
+.rangoli-container {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.rangoli-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: brightness(0.70);
 }
