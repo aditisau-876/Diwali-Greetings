@@ -4,7 +4,7 @@
 :root {
   font-family: 'Manrope', sans-serif;
   color: #fff0d9;
-  background: #100b09;
+  background: #050302;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -20,90 +20,99 @@ html,
 body,
 #root {
   width: 100%;
-  min-height: 100%;
+  height: 100%;
 }
 
 body {
   min-width: 320px;
   min-height: 100vh;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
-.experience {
+/* Main scene */
+
+.scene1 {
   position: relative;
   width: 100%;
+  height: 100vh;
   height: 100svh;
   min-height: 600px;
   overflow: hidden;
-  background: #100b09;
   isolation: isolate;
+  background: #050302;
+  color: #fff0d9;
 }
 
-/* Courtyard image */
+/* Dark temple background */
 
-.courtyard-background {
+.scene1-background {
+  position: absolute;
+  inset: -5%;
+  z-index: 0;
+
+  background-image: url("/images/temple-dark.png");
+  background-size: 80% auto;
+  background-position: center 46%;
+  background-repeat: no-repeat;
+
+  opacity: 0;
+  filter: brightness(0.55) saturate(0.78) contrast(0.92);
+
+  transform: scale(1.12);
+  animation: templeReveal 6s cubic-bezier(0.2, 0.65, 0.3, 1) forwards;
+}
+
+@keyframes templeReveal {
+  0% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+/* Subtle cinematic shading — no heavy black rectangle */
+
+.scene1-vignette {
   position: absolute;
   inset: 0;
-  z-index: -3;
-}
-
-.courtyard-background img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center center;
-  display: block;
-
-  filter:
-    brightness(0.58)
-    saturate(0.82)
-    contrast(1.08);
-}
-
-/* Dark cinematic overlay */
-
-.cinematic-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: -2;
+  z-index: 2;
   pointer-events: none;
 
   background:
     linear-gradient(
-      180deg,
-      rgba(10, 7, 6, 0.58) 0%,
-      rgba(10, 7, 6, 0.12) 42%,
-      rgba(10, 7, 6, 0.22) 70%,
-      rgba(10, 7, 6, 0.75) 100%
-    ),
-    radial-gradient(
-      ellipse at center,
-      transparent 25%,
-      rgba(10, 6, 5, 0.42) 100%
+      to bottom,
+      rgba(0, 0, 0, 0.12),
+      transparent 28%,
+      transparent 72%,
+      rgba(0, 0, 0, 0.18)
     );
 }
 
 /* Transparent 3D layer */
 
-.scene-container {
+.scene1-canvas {
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
 }
 
-.scene-container canvas {
+.scene1-canvas canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
 }
 
-/* Heading */
+/* Main heading */
 
-.brand {
+.scene1-title {
   position: absolute;
-  z-index: 2;
-  top: 9%;
+  z-index: 3;
+  top: 7%;
   left: 0;
   width: 100%;
   padding: 0 20px;
@@ -111,86 +120,61 @@ body {
   pointer-events: none;
 }
 
-.brand-label {
-  display: block;
-  color: #e7bd83;
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.25em;
-  line-height: 1.8;
+.scene1-eyebrow {
+  color: #d9a66c;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.35em;
 }
 
-.brand h1 {
-  margin-top: 22px;
+.scene1-title h1 {
+  margin: 14px 0;
   color: #fff0d9;
   font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(54px, 8vw, 104px);
+  font-size: clamp(48px, 7vw, 88px);
   font-weight: 400;
   letter-spacing: 0.015em;
   line-height: 1;
-  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+  text-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
 }
 
-.brand p {
-  margin-top: 16px;
+.scene1-title p:last-child {
+  margin-top: 12px;
   color: #e8d0b2;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 300;
-  letter-spacing: 0.2em;
+  letter-spacing: 0.18em;
 }
 
-/* Scroll hint */
+/* Background reveal */
 
-.scroll-hint {
-  position: absolute;
-  z-index: 3;
-  bottom: 32px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  color: #ead0aa;
-  font-size: 9px;
-  letter-spacing: 0.22em;
-  white-space: nowrap;
-}
-
-.scroll-hint span {
-  font-size: 20px;
-  animation: floatDown 1.5s ease-in-out infinite;
-}
-
-@keyframes floatDown {
-  0%, 100% {
-    transform: translateY(0);
+@keyframes templeReveal {
+  from {
+    opacity: 0;
   }
 
-  50% {
-    transform: translateY(7px);
+  to {
+    opacity: 1;
   }
 }
+
+/* Mobile */
 
 @media (max-width: 600px) {
-  .brand {
+  .scene1-title {
     top: 8%;
   }
 
-  .brand-label {
-    font-size: 7px;
-    letter-spacing: 0.15em;
-  }
-
-  .brand h1 {
-    font-size: 58px;
-  }
-
-  .brand p {
-    font-size: 10px;
-  }
-
-  .scroll-hint {
+  .scene1-eyebrow {
     font-size: 8px;
+    letter-spacing: 0.2em;
+  }
+
+  .scene1-title h1 {
+    font-size: 54px;
+  }
+
+  .scene1-title p:last-child {
+    font-size: 9px;
   }
 }
