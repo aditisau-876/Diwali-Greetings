@@ -1,0 +1,100 @@
+
+.scene1 {
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  min-height: 600px;
+  overflow: hidden;
+  background: #050302;
+  color: #fff2dc;
+}
+
+.scene1-background {
+  position: absolute;
+  inset: -5%;
+  z-index: 0;
+
+  background-image: url("/images/temple-dark.png");
+  background-size: 80% auto;
+  background-position: center 46%;
+  background-repeat: no-repeat;
+
+  opacity: 0;
+  filter: brightness(0.55) saturate(0.78) contrast(0.92);
+
+  transform: scale(1.12);
+  animation: templeReveal 6s cubic-bezier(0.2, 0.65, 0.3, 1) forwards;
+}
+
+@keyframes templeReveal {
+  0% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+}
+
+.scene1-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+
+  background:
+    linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 0.08),
+      transparent 30%,
+      rgba(0, 0, 0, 0.12)
+    );
+
+  /* Removed the heavy black radial gradient */
+}
+
+.scene1-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.scene1-title {
+  position: absolute;
+  z-index: 3;
+  top: 7%;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.scene1-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: #d9a66c;
+}
+
+.scene1-title h1 {
+  margin: 14px 0;
+  font-family: Georgia, serif;
+  font-size: clamp(30px, 4vw, 54px);
+  font-weight: 400;
+}
+
+.scene1-title p:last-child {
+  color: #d7c4ae;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+}
+
+@keyframes templeReveal {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
