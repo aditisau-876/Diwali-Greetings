@@ -24,56 +24,55 @@ function SceneObjects({ started }: Props) {
       />
 
       {/* Hanging temple bells */}
-      <TempleBell
-        started={started}
-        position={[-3.2, 3.5, -1.8]}
-        scale={0.008}
-        delay={1.5}
-        phase={0}
-        swingAmplitude={0.12}
-      />
+      
+<TempleBell
+  started={started}
+  position={[-2.4, 1.8, -1.5]}
+  scale={1.8}
+  delay={1.5}
+  phase={0}
+  swingAmplitude={0.12}
+/>
 
-      <TempleBell
-        started={started}
-        position={[-1.6, 3.9, -2]}
-        scale={0.008}
-        delay={1.9}
-        phase={1.1}
-        swingAmplitude={0.10}
-      />
+<TempleBell
+  started={started}
+  position={[-4.0, 2.0, -2]}
+  scale={1.05}
+  delay={2.1}
+  phase={1.2}
+  swingAmplitude={0.10}
+/>
 
-      <TempleBell
-        started={started}
-        position={[0, 3.6, -2.2]}
-        scale={0.008}
-        delay={2.3}
-        phase={2.2}
-        swingAmplitude={0.12}
-      />
-
-      <TempleBell
-        started={started}
-        position={[1.7, 3.9, -2]}
-        scale={0.008}
-        delay={2.7}
-        phase={0.8}
-        swingAmplitude={0.10}
-      />
-
-      <TempleBell
-        started={started}
-        position={[3.3, 3.5, -1.8]}
-        scale={0.008}
-        delay={3.1}
-        phase={2.8}
-        swingAmplitude={0.12}
-      />
+<TempleBell
+  started={started}
+  position={[2.4, 3.1, -1.5]}
+  scale={1}
+  delay={2.7}
+  phase={2.1}
+  swingAmplitude={0.12}
+/>
+<TempleBell
+  started={started}
+  position={[6.0, 1.5, -1.5]}
+  scale={1}
+  delay={2.7}
+  phase={2.1}
+  swingAmplitude={0.12}
+/>
+<TempleBell
+  started={started}
+  position={[3.4, 1.0, -1.5]}
+  scale={2.5}
+  delay={2.7}
+  phase={2.1}
+  swingAmplitude={0.12}
+/>
 
       {/* Multiple hanging brass lanterns */}
       <BrassLantern
         started={started}
         position={[-4.1, 2.50, -0.50]}
-        scale={5}
+        scale={6.5}
         delay={3.0}
         phase={0}
         swingAmplitude={0.05}

@@ -15,11 +15,11 @@ interface Props {
 
 export default function TempleBell({
   started,
-  position = [0, 3, -1],
-  scale = 0.008,
-  delay = 1,
+  position = [0, 0, 0],
+  scale = 1,
+  delay = 0,
   phase = 0,
-  swingAmplitude = 0.10,
+  swingAmplitude = 0.12,
 }: Props) {
   const pivot = useRef<THREE.Group>(null);
   const startTime = useRef<number | null>(null);
@@ -29,22 +29,31 @@ export default function TempleBell({
   const model = useMemo(() => {
     const cloned = scene.clone(true);
 
+    cloned.updateMatrixWorld(true);
+
+    const bounds = new THREE.Box3().setFromObject(cloned);
+    const size = bounds.getSize(new THREE.Vector3());
+    const center = bounds.getCenter(new THREE.Vector3());
+
+    // Normalize model height to 2 units.
+    const factor = 2 / size.y;
+
+    cloned.scale.multiplyScalar(factor);
+
+    // Center the model horizontally and vertically.
+    cloned.position.set(
+      -center.x * factor,
+      -center.y * factor,
+      -center.z * factor
+    );
+
     cloned.traverse((object) => {
       if (object instanceof THREE.Mesh) {
         object.castShadow = true;
         object.receiveShadow = true;
+        object.visible = true;
       }
     });
-
-    // Log dimensions to help diagnose the model's actual scale.
-    cloned.updateMatrixWorld(true);
-
-    const bounds = new THREE.Box3().setFromObject(cloned);
-    const size = new THREE.Vector3();
-    bounds.getSize(size);
-
-    console.log("Temple bell dimensions:", size.toArray());
-    console.log("Temple bell bounds:", bounds);
 
     return cloned;
   }, [scene]);
@@ -52,42 +61,41 @@ export default function TempleBell({
   useFrame(({ clock }) => {
     if (!pivot.current) return;
 
-    if (started && startTime.current === null) {
-      startTime.current = clock.elapsedTime;
+    if (!started) {
+      pivot.current.visible = false;
+      startTime.current = null;
+      return;
     }
 
-    if (!started || startTime.current === null) {
-      pivot.current.visible = false;
-      return;
+    if (startTime.current === null) {
+      startTime.current = clock.elapsedTime;
     }
 
     const elapsed = clock.elapsedTime - startTime.current;
 
-    // Keep the original model visible after its delay.
-    pivot.current.visible = elapsed >= delay;
+    if (elapsed < delay) {
+      pivot.current.visible = false;
+      return;
+    }
 
-    if (elapsed < delay) return;
+    pivot.current.visible = true;
 
-    // Gentle continuous swinging.
     const swingTime = elapsed - delay;
 
-    pivot.current.rotation.z =
-      Math.sin(swingTime * 2.4 + phase) * swingAmplitude;
+    // Gentle continuous hanging motion.
+    const primarySwing =
+      Math.sin(swingTime * 1.8 + phase) * swingAmplitude;
 
-    pivot.current.rotation.x =
-      Math.sin(swingTime * 1.8 + phase) *
-      swingAmplitude *
-      0.15;
+    const secondarySwing =
+      Math.sin(swingTime * 1.15 + phase) * swingAmplitude * 0.12;
+
+    pivot.current.rotation.z = primarySwing;
+    pivot.current.rotation.x = secondarySwing;
   });
 
   return (
-    <group
-      ref={pivot}
-      position={position}
-      scale={scale}
-      visible={false}
-    >
-      <primitive object={model} />
+    <group ref={pivot} position={position} scale={scale} visible={false}>
+      <primitive object={model} position={[0, -1, 0]} />
     </group>
   );
 }
