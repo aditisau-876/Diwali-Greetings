@@ -14,7 +14,6 @@ export default function Scene1() {
       </div>
 
       <header className="scene1-title">
-        <p className="scene1-eyebrow">A DIWALI EXPERIENCE</p>
         <h1>A Light Within</h1>
         <p>One flame. A thousand lights.</p>
       </header>
