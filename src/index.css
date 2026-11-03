@@ -282,3 +282,31 @@ body {
   object-position: center;
   filter: brightness(0.70);
 }
+
+
+
+/* =================================
+   TRAVELLING DIYA — PERSISTENT LAYER
+================================= */
+.diya-journey {
+  position: relative;
+  width: 100%;
+}
+
+.traveling-diya-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  z-index: 1000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.traveling-diya-layer canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none;
+}

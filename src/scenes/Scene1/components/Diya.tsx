@@ -3,9 +3,11 @@ import { useGLTF, ContactShadows } from "@react-three/drei";
 import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import { revealProgress } from "../hooks/useScene1Animation";
+import type { MotionValue } from "framer-motion";
 
 interface Props {
   started: boolean;
+  travelProgress?: MotionValue<number>;
 }
 
 interface AnimatedMaterial {
@@ -173,7 +175,7 @@ function createFlameMaterial(
   return mat;
 }
 
-export default function Diya({ started }: Props) {
+export default function Diya({ started, travelProgress }: Props) {
   const group = useRef<THREE.Group>(null);
   const flameLight = useRef<THREE.PointLight>(null);
   const glowTight = useRef<THREE.Sprite>(null);
@@ -296,10 +298,38 @@ export default function Diya({ started }: Props) {
         material.transparent = diyaReveal < 1 || originalTransparent;
       }
     );
+    
+if (group.current) {
+  group.current.visible = diyaReveal > 0;
 
-    if (group.current) {
-      group.current.visible = diyaReveal > 0;
-    }
+  const rawProgress = travelProgress?.get() ?? 0;
+
+  // Start the journey after a little scrolling
+  const progress = THREE.MathUtils.smoothstep(
+    rawProgress,
+    0.08,
+    0.72
+  );
+
+  // Smooth movement
+  const eased = THREE.MathUtils.smoothstep(progress, 0, 1);
+
+  // Move towards the centre of the screen
+  const startY = DIYA_Y;
+  const landingY = 0.05;
+
+  group.current.position.set(
+    0.4,
+    THREE.MathUtils.lerp(startY, landingY, eased),
+    1.0
+  );
+
+  // Gradually become smaller as it approaches the rangoli
+  const scale = THREE.MathUtils.lerp(1, 0.45, eased);
+
+  group.current.scale.setScalar(DIYA_SCALE * scale);
+}
+
 
     const g = gust.current;
     if (elapsed > g.next) {

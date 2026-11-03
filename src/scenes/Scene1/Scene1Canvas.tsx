@@ -5,7 +5,6 @@ import { Suspense } from "react";
 import TempleEnvironment from "./components/TempleEnvironment";
 import TempleBell from "./components/TempleBell";
 import BrassLantern from "./components/BrassLantern";
-import Diya from "./components/Diya";
 
 interface Props {
   started: boolean;
@@ -115,7 +114,7 @@ function SceneObjects({ started }: Props) {
       />
 
       {/* Main diya */}
-      <Diya started={started} />
+      
     </>
   );
 }
