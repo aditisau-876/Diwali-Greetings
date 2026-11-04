@@ -8,9 +8,14 @@ import BrassLantern from "./components/BrassLantern";
 
 interface Props {
   started: boolean;
+  active?: boolean;
 }
 
-function SceneObjects({ started }: Props) {
+interface SceneProps {
+  started: boolean;
+}
+
+function SceneObjects({ started }: SceneProps) {
   return (
     <>
       <TempleEnvironment started={started} />
@@ -119,9 +124,10 @@ function SceneObjects({ started }: Props) {
   );
 }
 
-export default function Scene1Canvas({ started }: Props) {
+export default function Scene1Canvas({ started, active = true }: Props) {
   return (
     <Canvas
+      frameloop={active ? "always" : "never"}
       shadows
       dpr={[1, 1.5]}
       camera={{

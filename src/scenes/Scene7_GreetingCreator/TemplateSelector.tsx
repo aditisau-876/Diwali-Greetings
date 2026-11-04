@@ -72,25 +72,16 @@ export default function TemplateSelector({
 
       <div className="template-heading">
         <div>
-          <span className="field-label">
-            THE ART OF GREETING
-          </span>
-
-          <h3>Choose your design</h3>
-
-          <p>
-            Every celebration deserves its own little masterpiece.
-          </p>
+          <h3>Design</h3>
+          <p>Pick the look of your card.</p>
         </div>
 
-        <span className="template-count">
-          {templates.length} DESIGNS
-        </span>
+
       </div>
 
       <div className="template-gallery">
 
-        {templates.map((template, index) => (
+        {templates.map((template) => (
           <button
             key={template.id}
             type="button"
@@ -161,9 +152,6 @@ export default function TemplateSelector({
                 </span>
               )}
 
-              <span className="template-number">
-                0{index + 1}
-              </span>
 
             </div>
 
@@ -187,9 +175,6 @@ export default function TemplateSelector({
 
       </div>
 
-      <p className="template-footnote">
-        Select a design to see your personalised greeting transform.
-      </p>
 
     </section>
   );

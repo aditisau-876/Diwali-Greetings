@@ -1,0 +1,2565 @@
+
+
+.creator-page {
+
+  min-height: 100vh;
+
+  padding: 0 6%;
+
+  color: #f8ead6;
+
+  background:
+
+    radial-gradient(ellipse at 50% 30%, #30203a 0%, transparent 55%),
+
+    linear-gradient(135deg, #100b19, #17101f 55%, #0c0912);
+
+  font-family: 'Manrope', sans-serif;
+
+  overflow: hidden;
+
+}
+
+
+
+.creator-nav {
+
+  min-height: 78px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  border-bottom: 1px solid rgba(226, 190, 132, 0.16);
+
+}
+
+
+
+.creator-logo {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  color: #e8bd77;
+
+  font-size: 13px;
+
+  letter-spacing: 0.17em;
+
+}
+
+
+
+.creator-logo strong {
+
+  color: #fff0d9;
+
+}
+
+
+
+.creator-nav-label,
+
+.eyebrow {
+
+  color: #c69d69;
+
+  font-size: 9px;
+
+  letter-spacing: 0.25em;
+
+  font-weight: 600;
+
+}
+
+
+
+.back-button {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  color: #d9c3a5;
+
+  background: transparent;
+
+  border: 0;
+
+  cursor: pointer;
+
+  font: inherit;
+
+  font-size: 12px;
+
+}
+
+
+
+.creator-header {
+
+  text-align: center;
+
+  max-width: 720px;
+
+  margin: 65px auto 52px;
+
+}
+
+
+
+.creator-header h1 {
+
+  margin: 15px 0;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: clamp(42px, 5.5vw, 68px);
+
+  font-weight: 400;
+
+  color: #fff0d9;
+
+}
+
+
+
+.creator-header h1 em {
+
+  color: #e7bb76;
+
+  font-weight: 400;
+
+}
+
+
+
+.creator-header p {
+
+  max-width: 480px;
+
+  margin: 0 auto;
+
+  color: #b9a99c;
+
+  font-size: 13px;
+
+  line-height: 1.9;
+
+}
+
+
+
+.creator-layout {
+
+  max-width: 1200px;
+
+  margin: 0 auto 70px;
+
+  display: grid;
+
+  grid-template-columns: minmax(280px, 0.85fr) minmax(350px, 1.15fr);
+
+  gap: 65px;
+
+  align-items: start;
+
+}
+
+
+
+.creator-controls {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 32px;
+
+}
+
+
+
+.editor-panel,
+
+.template-section {
+
+  padding: 27px;
+
+  border: 1px solid rgba(226, 190, 132, 0.18);
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+
+}
+
+
+
+.panel-heading {
+
+  margin-bottom: 27px;
+
+}
+
+
+
+.panel-heading h2 {
+
+  margin: 10px 0 7px;
+
+  color: #f9e8cf;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 31px;
+
+  font-weight: 400;
+
+}
+
+
+
+.panel-heading p {
+
+  color: #a99b90;
+
+  font-size: 11px;
+
+  line-height: 1.8;
+
+}
+
+
+
+.field-label {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 9px;
+
+  margin: 19px 0 10px;
+
+  color: #e3c08e;
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+}
+
+
+
+.greeting-input {
+
+  width: 100%;
+
+  padding: 14px 15px;
+
+  border: 1px solid rgba(226, 190, 132, 0.2);
+
+  border-radius: 7px;
+
+  outline: none;
+
+  color: #fff1df;
+
+  background: rgba(0, 0, 0, 0.2);
+
+  font: inherit;
+
+  font-size: 12px;
+
+  transition: border-color 0.2s, background 0.2s;
+
+}
+
+
+
+.greeting-input:focus {
+
+  border-color: #c69d69;
+
+  background: rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+.greeting-input::placeholder {
+
+  color: #81746b;
+
+}
+
+
+
+.greeting-message {
+
+  min-height: 120px;
+
+  resize: vertical;
+
+  line-height: 1.8;
+
+}
+
+
+
+.character-count {
+
+  margin-top: 7px;
+
+  text-align: right;
+
+  color: #87796f;
+
+  font-size: 10px;
+
+}
+
+
+
+.template-section > .field-label {
+
+  margin-top: 0;
+
+  margin-bottom: 17px;
+
+}
+
+
+
+.template-options {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+
+}
+
+
+
+.template-option {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  width: 100%;
+
+  padding: 12px;
+
+  text-align: left;
+
+  color: #f3e4d2;
+
+  background: rgba(0, 0, 0, 0.16);
+
+  border: 1px solid rgba(226, 190, 132, 0.13);
+
+  border-radius: 8px;
+
+  cursor: pointer;
+
+  transition: 0.25s ease;
+
+}
+
+
+
+.template-option:hover,
+
+.template-option.selected {
+
+  border-color: #bd9259;
+
+  background: rgba(195, 151, 91, 0.09);
+
+}
+
+
+
+.template-swatch {
+
+  width: 34px;
+
+  height: 34px;
+
+  flex-shrink: 0;
+
+  border-radius: 7px;
+
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2);
+
+}
+
+
+
+.template-option strong,
+
+.template-option small {
+
+  display: block;
+
+}
+
+
+
+.template-option strong {
+
+  font-size: 11px;
+
+  font-weight: 500;
+
+}
+
+
+
+.template-option small {
+
+  margin-top: 4px;
+
+  color: #9e8d80;
+
+  font-size: 9px;
+
+}
+
+
+
+.template-check {
+
+  margin-left: auto;
+
+  color: #e9bf7b;
+
+}
+
+
+
+/* LIVE CARD PREVIEW */
+
+
+
+.preview-area {
+
+  position: sticky;
+
+  top: 30px;
+
+}
+
+
+
+.preview-topline {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  margin-bottom: 16px;
+
+  color: #c9ad87;
+
+  font-size: 9px;
+
+  letter-spacing: 0.2em;
+
+}
+
+
+
+.live-indicator {
+
+  color: #86c99b;
+
+}
+
+
+
+.greeting-card {
+
+  position: relative;
+
+  width: 100%;
+
+  min-height: 490px;
+
+  padding: 60px 35px;
+
+  overflow: hidden;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+
+  border: 1px solid rgba(242, 204, 133, 0.75);
+
+  box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+
+  transition: background 0.4s;
+
+}
+
+
+
+.theme-royal {
+
+  background:
+
+    radial-gradient(circle at center, #54331d 0%, transparent 70%),
+
+    linear-gradient(145deg, #27121b, #48201d 55%, #21101a);
+
+}
+
+
+
+.theme-orange {
+
+  background:
+
+    radial-gradient(circle at center, #873c20, transparent 75%),
+
+    linear-gradient(145deg, #49170f, #9b3c17 55%, #45160e);
+
+}
+
+
+
+.theme-midnight {
+
+  background:
+
+    radial-gradient(circle at center, #233e6b, transparent 75%),
+
+    linear-gradient(145deg, #101b36, #1b3156 55%, #10172c);
+
+}
+
+
+
+.greeting-card::before {
+
+  content: "";
+
+  position: absolute;
+
+  inset: 12px;
+
+  border: 1px solid rgba(238, 198, 126, 0.5);
+
+  pointer-events: none;
+
+}
+
+
+
+.greeting-card::after {
+
+  content: "✧";
+
+  position: absolute;
+
+  top: 25px;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  color: #e8bf79;
+
+  font-size: 24px;
+
+}
+
+
+
+.card-corner {
+
+  position: absolute;
+
+  color: #eac27c;
+
+  font-size: 26px;
+
+}
+
+
+
+.top-left { top: 22px; left: 25px; }
+
+.top-right { top: 22px; right: 25px; }
+
+.bottom-left { bottom: 22px; left: 25px; }
+
+.bottom-right { bottom: 22px; right: 25px; }
+
+
+
+.card-decoration {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 24px;
+
+  margin-bottom: 22px;
+
+  color: #eec77f;
+
+  font-size: 25px;
+
+}
+
+
+
+.card-sparkle {
+
+  margin-bottom: 17px;
+
+  color: #f3cb84;
+
+}
+
+
+
+.card-kicker {
+
+  color: #e8c994;
+
+  font-size: 9px;
+
+  letter-spacing: 0.3em;
+
+}
+
+
+
+.greeting-card h2 {
+
+  margin-top: 23px;
+
+  color: #fff0d9;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 38px;
+
+  font-weight: 400;
+
+}
+
+
+
+.greeting-card h1 {
+
+  color: #f6cf83;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: clamp(65px, 8vw, 91px);
+
+  font-weight: 400;
+
+  line-height: 1.05;
+
+  text-shadow: 0 4px 25px rgba(0,0,0,0.3);
+
+}
+
+
+
+.card-divider {
+
+  width: 100px;
+
+  height: 1px;
+
+  margin: 23px 0;
+
+  background: #d9ad68;
+
+  position: relative;
+
+}
+
+
+
+.card-divider span {
+
+  position: absolute;
+
+  top: 50%;
+
+  left: 50%;
+
+  transform: translate(-50%, -50%);
+
+  padding: 0 10px;
+
+  color: #f5cd83;
+
+  background: #482b20;
+
+}
+
+
+
+.card-to {
+
+  color: #f3d8b4;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 19px;
+
+}
+
+
+
+.card-message {
+
+  max-width: 390px;
+
+  margin: 15px auto 23px;
+
+  color: #e7d1b9;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 17px;
+
+  line-height: 1.65;
+
+}
+
+
+
+.card-signature {
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 6px;
+
+  color: #d4b99a;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 16px;
+
+}
+
+
+
+.card-signature strong {
+
+  color: #f0c77f;
+
+  font-size: 23px;
+
+  font-weight: 500;
+
+}
+
+
+
+.card-bottom-decoration {
+
+  margin-top: 25px;
+
+  color: #e6bd79;
+
+  letter-spacing: 15px;
+
+}
+
+
+
+.preview-caption {
+
+  margin-top: 15px;
+
+  color: #9e8e81;
+
+  text-align: center;
+
+  font-size: 10px;
+
+}
+
+
+
+.creator-footer {
+
+  padding: 24px 0;
+
+  text-align: center;
+
+  color: #8d7868;
+
+  border-top: 1px solid rgba(226, 190, 132, 0.12);
+
+  font-size: 9px;
+
+  letter-spacing: 0.2em;
+
+}
+
+
+
+@media (max-width: 850px) {
+
+  .creator-layout {
+
+    grid-template-columns: 1fr;
+
+    gap: 35px;
+
+  }
+
+
+
+  .preview-area {
+
+    position: static;
+
+  }
+
+
+
+  .creator-header {
+
+    margin: 45px auto 35px;
+
+  }
+
+
+
+  .creator-nav-label {
+
+    display: none;
+
+  }
+
+}
+
+
+
+@media (max-width: 480px) {
+
+  .creator-page {
+
+    padding: 0 18px;
+
+  }
+
+
+
+  .editor-panel,
+
+  .template-section {
+
+    padding: 20px;
+
+  }
+
+
+
+  .greeting-card {
+
+    min-height: 440px;
+
+    padding: 50px 24px;
+
+  }
+
+
+
+  .card-message {
+
+    font-size: 15px;
+
+  }
+
+}
+
+
+
+/* PREMIUM ORNAMENTAL DIWALI CARD */
+
+
+
+.greeting-card {
+
+  isolation: isolate;
+
+  position: relative;
+
+}
+
+
+
+.ornamental-border {
+
+  position: absolute;
+
+  inset: 19px;
+
+  border: 1px solid rgba(239, 193, 111, 0.75);
+
+  outline: 1px solid rgba(239, 193, 111, 0.25);
+
+  outline-offset: 5px;
+
+  pointer-events: none;
+
+  z-index: 1;
+
+}
+
+
+
+.ornamental-border::before,
+
+.ornamental-border::after {
+
+  content: "❖";
+
+  position: absolute;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  color: #eac47c;
+
+  font-size: 15px;
+
+}
+
+
+
+.ornamental-border::before {
+
+  top: -10px;
+
+}
+
+
+
+.ornamental-border::after {
+
+  bottom: -10px;
+
+}
+
+
+
+.mandala-art {
+
+  position: absolute;
+
+  top: -55px;
+
+  left: 50%;
+
+  width: 230px;
+
+  transform: translateX(-50%);
+
+  opacity: 0.16;
+
+  pointer-events: none;
+
+  animation: mandalaRotate 90s linear infinite;
+
+  z-index: 0;
+
+}
+
+
+
+@keyframes mandalaRotate {
+
+  from { rotate: 0deg; }
+
+  to { rotate: 360deg; }
+
+}
+
+
+
+.card-content {
+
+  position: relative;
+
+  z-index: 2;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+}
+
+
+
+.card-corner {
+
+  z-index: 3;
+
+  color: #f1c77d;
+
+  font-size: 25px;
+
+  text-shadow: 0 0 15px rgba(255, 185, 76, 0.4);
+
+}
+
+
+
+.floral-top-left { top: 24px; left: 27px; }
+
+.floral-top-right { top: 24px; right: 27px; }
+
+.floral-bottom-left { bottom: 24px; left: 27px; }
+
+.floral-bottom-right { bottom: 24px; right: 27px; }
+
+
+
+.card-diyas {
+
+  display: flex;
+
+  justify-content: center;
+
+  align-items: center;
+
+  gap: 12px;
+
+  margin-top: 15px;
+
+}
+
+
+
+.diya-art {
+
+  width: 66px;
+
+  filter: drop-shadow(0 0 12px rgba(255, 158, 44, 0.45));
+
+  animation: diyaGlow 2.5s ease-in-out infinite alternate;
+
+}
+
+
+
+.diya-art:nth-child(2) {
+
+  width: 82px;
+
+  animation-delay: 0.7s;
+
+}
+
+
+
+.diya-art:nth-child(3) {
+
+  animation-delay: 1.2s;
+
+}
+
+
+
+@keyframes diyaGlow {
+
+  from {
+
+    filter: drop-shadow(0 0 5px rgba(255, 158, 44, 0.25));
+
+  }
+
+  to {
+
+    filter: drop-shadow(0 0 18px rgba(255, 158, 44, 0.7));
+
+  }
+
+}
+
+
+
+/* THEME-SPECIFIC DECORATIVE COLOUR */
+
+
+
+.theme-royal .ornamental-border {
+
+  border-color: #e6bd76;
+
+}
+
+
+
+.theme-orange .ornamental-border {
+
+  border-color: #ffc078;
+
+}
+
+
+
+.theme-midnight .ornamental-border {
+
+  border-color: #b5c9ef;
+
+}
+
+
+
+.theme-orange .mandala-art {
+
+  opacity: 0.22;
+
+}
+
+
+
+.theme-midnight .mandala-art {
+
+  opacity: 0.20;
+
+}
+
+
+
+@media (max-width: 480px) {
+
+  .mandala-art {
+
+    width: 180px;
+
+  }
+
+
+
+  .diya-art {
+
+    width: 48px;
+
+  }
+
+
+
+  .diya-art:nth-child(2) {
+
+    width: 65px;
+
+  }
+
+
+
+  .ornamental-border {
+
+    inset: 16px;
+
+  }
+
+}
+
+
+
+/* DECORATION CUSTOMISATION PANEL */
+
+
+
+.decoration-section {
+
+  padding: 25px;
+
+  border: 1px solid rgba(226, 190, 132, 0.18);
+
+  border-radius: 14px;
+
+  background: rgba(255, 255, 255, 0.035);
+
+}
+
+
+
+.decoration-heading {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 20px;
+
+}
+
+
+
+.decoration-heading h3 {
+
+  margin-top: 8px;
+
+  color: #f9e8cf;
+
+  font-family: 'Cormorant Garamond', serif;
+
+  font-size: 27px;
+
+  font-weight: 400;
+
+}
+
+
+
+.decoration-count {
+
+  color: #d6b477;
+
+  font-size: 10px;
+
+}
+
+
+
+.decoration-grid {
+
+  display: grid;
+
+  grid-template-columns: repeat(3, 1fr);
+
+  gap: 10px;
+
+}
+
+
+
+.decoration-option {
+
+  position: relative;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  gap: 7px;
+
+  min-height: 112px;
+
+  padding: 13px 5px;
+
+  color: #f3e4d2;
+
+  background: rgba(0,0,0,.17);
+
+  border: 1px solid rgba(226,190,132,.15);
+
+  border-radius: 9px;
+
+  cursor: pointer;
+
+  transition: .25s ease;
+
+}
+
+
+
+.decoration-option:hover {
+
+  border-color: #bd9259;
+
+  transform: translateY(-3px);
+
+}
+
+
+
+.decoration-option.active {
+
+  background: rgba(195,151,91,.12);
+
+  border-color: #d2a45e;
+
+  box-shadow: 0 0 17px rgba(211,166,94,.09);
+
+}
+
+
+
+.decoration-icon {
+
+  font-size: 27px;
+
+}
+
+
+
+.decoration-option strong {
+
+  font-size: 10px;
+
+  font-weight: 500;
+
+}
+
+
+
+.decoration-option small {
+
+  color: #a99b90;
+
+  font-size: 8px;
+
+}
+
+
+
+.decoration-check {
+
+  position: absolute;
+
+  top: 6px;
+
+  right: 6px;
+
+  color: #f2c477;
+
+}
+
+
+
+.decoration-hint {
+
+  margin-top: 15px;
+
+  color: #9e8d80;
+
+  font-size: 10px;
+
+  line-height: 1.7;
+
+}
+
+
+
+/* CARD DECORATIONS */
+
+
+
+.preview-rangoli {
+
+  position: absolute;
+
+  top: -45px;
+
+  left: 50%;
+
+  width: 260px;
+
+  opacity: .18;
+
+  transform: translateX(-50%);
+
+  pointer-events: none;
+
+}
+
+
+
+.floating-flower,
+
+.floating-lotus {
+
+  position: absolute;
+
+  z-index: 2;
+
+  font-size: 29px;
+
+  filter: drop-shadow(0 0 9px rgba(255,175,70,.4));
+
+  animation: decorationFloat 4s ease-in-out infinite;
+
+}
+
+
+
+.flower-left {
+
+  top: 35%;
+
+  left: 7%;
+
+}
+
+
+
+.flower-right {
+
+  top: 35%;
+
+  right: 7%;
+
+  animation-delay: 1.2s;
+
+}
+
+
+
+.lotus-left {
+
+  bottom: 26%;
+
+  left: 7%;
+
+}
+
+
+
+.lotus-right {
+
+  bottom: 26%;
+
+  right: 7%;
+
+  animation-delay: 1.5s;
+
+}
+
+
+
+.floating-sparkle {
+
+  position: absolute;
+
+  z-index: 2;
+
+  color: #ffdc91;
+
+  font-size: 22px;
+
+  animation: sparklePulse 2s ease-in-out infinite;
+
+}
+
+
+
+.sparkle-one {
+
+  top: 22%;
+
+  left: 17%;
+
+}
+
+
+
+.sparkle-two {
+
+  top: 27%;
+
+  right: 17%;
+
+  animation-delay: .5s;
+
+}
+
+
+
+.sparkle-three {
+
+  bottom: 25%;
+
+  left: 22%;
+
+  animation-delay: 1s;
+
+}
+
+
+
+.sparkle-four {
+
+  bottom: 23%;
+
+  right: 22%;
+
+  animation-delay: 1.5s;
+
+}
+
+
+
+@keyframes decorationFloat {
+
+  0%, 100% {
+
+    transform: translateY(0);
+
+  }
+
+
+
+  50% {
+
+    transform: translateY(-8px);
+
+  }
+
+}
+
+
+
+@keyframes sparklePulse {
+
+  0%, 100% {
+
+    opacity: .4;
+
+    transform: scale(.8);
+
+  }
+
+
+
+  50% {
+
+    opacity: 1;
+
+    transform: scale(1.2);
+
+  }
+
+}
+
+
+
+/* =========================================
+
+   PREMIUM GREETING TEMPLATE GALLERY
+
+\========================================= */
+
+
+
+.template-section {
+
+  padding: 28px;
+
+}
+
+
+
+.template-heading {
+
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: flex-start;
+
+  gap: 16px;
+
+  margin-bottom: 24px;
+
+}
+
+
+
+.template-heading h3 {
+
+  color: #f8e8ce;
+
+  font-family: Georgia, serif;
+
+  font-size: 27px;
+
+  font-weight: 400;
+
+  margin: 10px 0 7px;
+
+}
+
+
+
+.template-heading p {
+
+  color: #b9a49a;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+
+}
+
+
+
+.template-count {
+
+  color: #d5a85f;
+
+  font-size: 9px;
+
+  letter-spacing: 1.5px;
+
+  white-space: nowrap;
+
+  padding-top: 8px;
+
+}
+
+
+
+.template-gallery {
+
+  display: grid;
+
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+
+  gap: 17px;
+
+}
+
+
+
+.template-option {
+
+  position: relative;
+
+  min-width: 0;
+
+  padding: 9px;
+
+  border: 1px solid rgba(210, 170, 111, 0.17);
+
+  border-radius: 12px;
+
+  background: rgba(255, 255, 255, 0.025);
+
+  text-align: left;
+
+  cursor: pointer;
+
+  transition:
+
+    transform 0.35s ease,
+
+    border-color 0.35s ease,
+
+    background 0.35s ease,
+
+    box-shadow 0.35s ease;
+
+}
+
+
+
+.template-option:hover {
+
+  transform: translateY(-5px);
+
+  border-color: rgba(222, 177, 103, 0.65);
+
+  background: rgba(255, 255, 255, 0.055);
+
+}
+
+
+
+.template-option.selected {
+
+  border-color: #d7a957;
+
+  background: rgba(215, 169, 87, 0.09);
+
+  box-shadow: 0 0 22px rgba(215, 169, 87, 0.12);
+
+}
+
+
+
+/* Miniature card artwork */
+
+
+
+.template-art {
+
+  position: relative;
+
+  width: 100%;
+
+  aspect-ratio: 0.86;
+
+  padding: 12px;
+
+  overflow: hidden;
+
+  border-radius: 7px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+}
+
+
+
+.template-art-frame {
+
+  position: relative;
+
+  width: 100%;
+
+  height: 100%;
+
+  border: 1px solid rgba(255, 218, 151, 0.65);
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  align-items: center;
+
+  overflow: hidden;
+
+  padding: 12px 5px;
+
+  text-align: center;
+
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.13);
+
+}
+
+
+
+.template-art-label {
+
+  font-size: 7px;
+
+  letter-spacing: 2px;
+
+  margin-bottom: 15px;
+
+  opacity: 0.85;
+
+}
+
+
+
+.template-art-symbol {
+
+  font-size: 28px;
+
+  margin-bottom: 9px;
+
+}
+
+
+
+.template-art-greeting {
+
+  font-family: Georgia, serif;
+
+  font-size: clamp(12px, 2vw, 18px);
+
+  margin-bottom: 0;
+
+}
+
+
+
+.template-art-title {
+
+  font-family: Georgia, serif;
+
+  font-size: clamp(23px, 4vw, 36px);
+
+  line-height: 1.2;
+
+}
+
+
+
+.template-art-divider {
+
+  margin: 10px 0;
+
+  font-size: 13px;
+
+}
+
+
+
+.template-art-message {
+
+  font-family: Georgia, serif;
+
+  font-size: 8px;
+
+  opacity: 0.85;
+
+}
+
+
+
+.template-art-bottom {
+
+  display: flex;
+
+  gap: 12px;
+
+  margin-top: 16px;
+
+  font-size: 12px;
+
+}
+
+
+
+.template-art-corner {
+
+  position: absolute;
+
+  font-size: 12px;
+
+}
+
+
+
+.template-art-corner.top-left {
+
+  top: 7px;
+
+  left: 7px;
+
+}
+
+
+
+.template-art-corner.top-right {
+
+  top: 7px;
+
+  right: 7px;
+
+}
+
+
+
+.template-art-corner.bottom-left {
+
+  bottom: 7px;
+
+  left: 7px;
+
+}
+
+
+
+.template-art-corner.bottom-right {
+
+  bottom: 7px;
+
+  right: 7px;
+
+}
+
+
+
+/* 01 - Royal Heritage */
+
+
+
+.template-royal .template-art {
+
+  background: linear-gradient(145deg, #551b27, #251018);
+
+  color: #f4d28e;
+
+}
+
+
+
+.template-royal .template-art-frame {
+
+  border: 2px double #d9ad61;
+
+  outline: 1px solid rgba(217, 173, 97, 0.4);
+
+  outline-offset: -5px;
+
+}
+
+
+
+.template-royal .template-art-symbol {
+
+  color: #f3ca79;
+
+}
+
+
+
+/* 02 - Rangoli Bloom */
+
+
+
+.template-rangoli .template-art {
+
+  background:
+
+    radial-gradient(circle at center, #7b275f 0%, #42194b 50%, #24122f 100%);
+
+  color: #ffdb91;
+
+}
+
+
+
+.template-rangoli .template-art-frame {
+
+  border: 1px solid #f4a6a9;
+
+  background:
+
+    radial-gradient(circle, rgba(255, 177, 91, 0.15), transparent 65%);
+
+}
+
+
+
+.template-rangoli .template-art-symbol {
+
+  color: #ffacbc;
+
+  font-size: 35px;
+
+}
+
+
+
+/* 03 - Midnight Celebration */
+
+
+
+.template-midnight .template-art {
+
+  background:
+
+    radial-gradient(circle at 50% 35%, #283e75, #111a36 75%);
+
+  color: #f5d48a;
+
+}
+
+
+
+.template-midnight .template-art-frame {
+
+  border: 1px solid #b9a7e5;
+
+}
+
+
+
+.template-midnight .template-art-symbol {
+
+  color: #f9db94;
+
+  text-shadow: 0 0 15px rgba(255, 218, 143, 0.8);
+
+}
+
+
+
+/* 04 - Minimal Luxe */
+
+
+
+.template-minimal .template-art {
+
+  background: linear-gradient(145deg, #f4e9d5, #e4d0ad);
+
+  color: #715038;
+
+}
+
+
+
+.template-minimal .template-art-frame {
+
+  border: 1px solid #b99a68;
+
+  box-shadow: inset 0 0 0 5px #f4e9d5,
+
+              inset 0 0 0 6px #b99a68;
+
+}
+
+
+
+.template-minimal .template-art-symbol {
+
+  color: #b48b4e;
+
+}
+
+
+
+/* 05 - Festival of Lights */
+
+
+
+.template-festival .template-art {
+
+  background:
+
+    radial-gradient(circle at 50% 50%, #a04429, #632323 75%);
+
+  color: #ffe0a1;
+
+}
+
+
+
+.template-festival .template-art-frame {
+
+  border: 2px solid #e8b45f;
+
+  background:
+
+    radial-gradient(circle at top, rgba(255, 177, 67, 0.2), transparent 55%);
+
+}
+
+
+
+.template-festival .template-art-symbol {
+
+  font-size: 30px;
+
+  filter: drop-shadow(0 0 7px rgba(255, 190, 91, 0.7));
+
+}
+
+
+
+/* Selection indicator */
+
+
+
+.template-selected-indicator {
+
+  position: absolute;
+
+  top: 17px;
+
+  right: 17px;
+
+  width: 27px;
+
+  height: 27px;
+
+  border-radius: 50%;
+
+  background: #e4b665;
+
+  color: #321b19;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+
+}
+
+
+
+.template-number {
+
+  position: absolute;
+
+  bottom: 17px;
+
+  left: 17px;
+
+  color: rgba(255, 255, 255, 0.7);
+
+  font-size: 9px;
+
+  letter-spacing: 1px;
+
+}
+
+
+
+/* Template information - positioned BELOW the artwork */
+
+.template-option {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0;
+    width: 100%;
+    min-height: 0;
+    box-sizing: border-box;
+}
+
+.template-art {
+    flex: none;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 0.86;
+    box-sizing: border-box;
+}
+
+.template-art-frame {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.template-info {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 13px 4px 4px;
+    box-sizing: border-box;
+}
+
+.template-info > div {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+}
+
+.template-info strong,
+.template-info small {
+    display: block;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.template-info strong { line-height: 1.3; }
+.template-info small { line-height: 1.5; }
+.template-arrow { flex: 0 0 auto; }
+
+
+/* Royal Heritage */
+
+
+
+.template-royal .template-art-frame {
+
+    background: linear-gradient(145deg, #54202a, #241018);
+
+    border: 2px solid #d4a84e;
+
+    color: #f5d58d;
+
+    box-shadow: inset 0 0 0 3px rgba(212, 168, 78, 0.2);
+
+}
+
+
+
+/* Rangoli Bloom */
+
+
+
+.template-rangoli .template-art-frame {
+
+    background: linear-gradient(145deg, #64215d, #28102f);
+
+    border: 2px solid #e6a7d9;
+
+    color: #ffd4ee;
+
+    box-shadow: inset 0 0 0 3px rgba(230, 167, 217, 0.2);
+
+}
+
+
+
+/* Midnight Celebration */
+
+
+
+.template-midnight .template-art-frame {
+
+    background: linear-gradient(145deg, #142e59, #080f2c);
+
+    border: 2px solid #b9c9ed;
+
+    color: #f8d88b;
+
+    box-shadow: inset 0 0 0 3px rgba(185, 201, 237, 0.2);
+
+}
+
+
+
+/* Minimal Luxe */
+
+
+
+.template-minimal .template-art-frame {
+
+    background: linear-gradient(145deg, #f7e8c9, #dfc69e);
+
+    border: 2px solid #a98453;
+
+    color: #60452c;
+
+    box-shadow: inset 0 0 0 3px rgba(120, 83, 46, 0.15);
+
+}
+
+
+
+/* Festival of Lights */
+
+
+
+.template-festival .template-art-frame {
+
+    background: linear-gradient(145deg, #a53b2c, #521c24);
+
+    border: 2px solid #edb85f;
+
+    color: #ffe1a0;
+
+    box-shadow: inset 0 0 0 3px rgba(237, 184, 95, 0.2);
+
+}
+
+
+
+/* Peacock Elegance */
+
+
+
+.template-peacock .template-art-frame {
+
+    background: linear-gradient(145deg, #08766b, #073b3d 75%, #102c43);
+
+    border: 2px solid #d7b66b;
+
+    color: #f6d990;
+
+    box-shadow: inset 0 0 0 3px rgba(215, 182, 107, 0.2);
+
+}
+
+
+
+/* =====================================
+
+   VERTICAL GREETING STUDIO LAYOUT
+
+\===================================== */
+
+
+
+.studio-section {
+
+    width: min(1100px, 90%);
+
+    margin: 0 auto 85px;
+
+}
+
+
+
+.studio-section-heading {
+
+    text-align: center;
+
+    margin-bottom: 32px;
+
+}
+
+
+
+.studio-section-heading h2 {
+
+    font-family: Georgia, serif;
+
+    font-size: clamp(27px, 4vw, 38px);
+
+    color: #f6e4ca;
+
+    margin: 12px 0;
+
+    font-weight: 400;
+
+}
+
+
+
+.studio-section-heading p {
+
+    color: #bba6ad;
+
+    font-size: 14px;
+
+}
+
+
+
+.studio-editor {
+
+    width: min(760px, 100%);
+
+    margin: 0 auto;
+
+}
+
+
+
+.studio-template {
+
+    width: min(950px, 100%);
+
+    margin: 0 auto;
+
+}
+
+
+
+.studio-preview-section .preview-area {
+
+    width: min(800px, 100%);
+
+    margin: 0 auto;
+
+}
+
+
+
+.studio-preview-section .greeting-card {
+
+    width: 100%;
+
+    margin: 0 auto;
+
+}
+
+
+
+.finalize-greeting {
+
+    width: min(850px, 90%);
+
+    margin: 70px auto;
+
+    padding: 55px 25px;
+
+    text-align: center;
+
+    border-top: 1px solid rgba(205, 163, 99, 0.25);
+
+}
+
+
+
+.finalize-greeting h2 {
+
+    font-family: Georgia, serif;
+
+    font-size: clamp(27px, 4vw, 38px);
+
+    color: #f6e4ca;
+
+    font-weight: 400;
+
+}
+
+
+
+.finalize-greeting p {
+
+    color: #bba6ad;
+
+    margin: 15px 0 28px;
+
+}
+
+
+
+.creator-footer {
+
+    text-align: center;
+
+    padding: 30px 15px;
+
+}
+
+
+
+/* =====================================
+
+   RESPONSIVE DESIGN
+
+\===================================== */
+
+
+
+@media (max-width: 650px) {
+
+
+
+    .template-gallery {
+
+        grid-template-columns: 1fr;
+
+    }
+
+
+
+    .template-option {
+
+        min-height: 135px;
+
+    }
+
+
+
+    .studio-section {
+
+        width: 92%;
+
+        margin-bottom: 55px;
+
+    }
+
+
+
+    .studio-section-heading {
+
+        margin-bottom: 22px;
+
+    }
+
+
+
+    .finalize-greeting {
+
+        padding: 35px 15px;
+
+    }
+
+}
+
+/* Peacock theme - Full greeting card */
+
+
+
+.theme-peacock {
+
+    background: radial-gradient(
+
+        circle at center,
+
+        #17645b,
+
+        #073d39 70%,
+
+        #042c2b
+
+    );
+
+    color: #f5dfaa;
+
+    border: 2px solid #c6a15c;
+
+}
+
+
+
+.theme-peacock .ornamental-border {
+
+    border-color: #d8b66c;
+
+}
+
+
+
+.theme-peacock .card-kicker {
+
+    color: #e8c779;
+
+}
+
+
+
+.theme-peacock .card-signature strong {
+
+    color: #f1cf82;
+
+}
+
+
+
+.theme-peacock .card-divider {
+
+    color: #e5bd6c;
+
+}
