@@ -1,22 +1,22 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Manrope:wght@300;400;500;600&display=swap');
 
-/* =================================
-   GLOBAL STYLES & VARIABLES
-================================= */
-
 :root {
-  font-family: 'Manrope', sans-serif;
-  color: #F4EBDD;
-  background: #050302;
+  --ink: #050302;
+  --studio-bg: #0d0907;
+  --ivory: #f1e7d6;
+  --ivory-dim: #b9ab98;
+  --gold: #c9a45c;
+  --gold-soft: rgba(201, 164, 92, 0.28);
+  --serif: 'Cormorant Garamond', Georgia, serif;
+  --sans: 'Manrope', system-ui, sans-serif;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 
+  font-family: var(--sans);
+  color: var(--ivory);
+  background: var(--ink);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-
-  --color-gold: #D4A94F;
-  --color-amber: #F3C66B;
-  --color-ivory: #F4EBDD;
-  --color-burgundy: #241416;
 }
 
 *,
@@ -32,281 +32,210 @@ body,
 #root {
   width: 100%;
   min-height: 100%;
-  margin: 0;
 }
 
 html {
-  overflow-x: hidden;
-  overflow-y: auto;
-  scroll-behavior: smooth;
+  overflow-x: clip;
 }
 
 body {
-  overflow-x: hidden;
-  overflow-y: auto;
-  background: #050302;
+  background: var(--ink);
+  overflow-x: clip;
 }
 
-#root {
-  min-height: 100vh;
+:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
-/* =================================
-   EXPERIENCE CONTAINER & SECTIONS
-================================= */
+button {
+  font: inherit;
+}
 
 .experience {
   position: relative;
   width: 100%;
-  min-height: 100%;
-  background: #050302;
-  overflow-x: hidden;
+  background: var(--ink);
 }
 
-/* Each scene takes a full viewport height and stacks normally */
-.scene-section {
+/* ------------------------------------------------------------------
+   The pinned journey: temple → rangoli. The stage stays on screen while
+   the page scrolls; the diya lives inside it and never leaves it.
+------------------------------------------------------------------ */
+
+.journey {
   position: relative;
-  width: 100%;
+  height: 340vh;
+  height: 340svh;
+}
+
+.journey-stage {
+  position: sticky;
+  top: 0;
   height: 100vh;
   height: 100svh;
   overflow: hidden;
-}
-
-.scene1-section {
-  background: #050302;
-}
-
-/* Smooth dark fade at the bottom of Scene 1 */
-.scene1-section::after {
-  content: '';
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 200px;
-  background: linear-gradient(to bottom, transparent, #050302);
-  pointer-events: none;
-  z-index: 10;
-}
-
-.scene2-section {
-  background: #080604;
-  /* Smooth entrance animation when Scene 2 enters the viewport */
-  animation: sceneEnter 1s cubic-bezier(0.16, 1, 0.3, 1) both;
-  animation-timeline: view();
-  animation-range: entry 0% cover 30%;
-}
-
-/* Smooth dark fade at the top of Scene 2 */
-.scene2-section::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 150px;
-  background: linear-gradient(to top, transparent, #080604);
-  pointer-events: none;
-  z-index: 10;
-}
-
-.greeting-section {
-  height: auto;
-  min-height: 100vh;
-}
-
-@keyframes sceneEnter {
-  from {
-    opacity: 0;
-    transform: translateY(40px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* =================================
-   SCENE 1 — TEMPLE
-================================= */
-
-.scene1 {
-  position: relative;
-  width: 100%;
-  height: 100%;
-  min-height: 600px;
-  overflow: hidden;
+  background: var(--ink);
   isolation: isolate;
-  background: #050302;
-  color: #fff0d9;
 }
 
-.scene1-background {
-  position: absolute;
-  inset: -5%;
-  z-index: 0;
-
-  background-image: url("/images/temple-dark.png");
-  background-size: 80% auto;
-  background-position: center 46%;
-  background-repeat: no-repeat;
-
-  opacity: 0;
-  filter: brightness(0.55) saturate(0.78) contrast(0.92);
-
-  transform: scale(1.12);
-  animation: templeReveal 6s cubic-bezier(0.2, 0.65, 0.3, 1) forwards;
-}
-
-@keyframes templeReveal {
-  0% {
-    opacity: 0;
-    transform: scale(1.12);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1.02);
-  }
-}
-
-.scene1-vignette {
+.stage-layer {
   position: absolute;
   inset: 0;
-  z-index: 2;
-  pointer-events: none;
-
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(0, 0, 0, 0.12),
-      transparent 28%,
-      transparent 72%,
-      rgba(0, 0, 0, 0.18)
-    );
+  will-change: opacity, transform;
 }
 
-.scene1-canvas {
-  position: absolute;
-  inset: 0;
+.courtyard-layer {
   z-index: 1;
-  pointer-events: none;
 }
 
-.scene1-canvas canvas {
-  display: block;
-  width: 100% !important;
-  height: 100% !important;
+.temple-layer {
+  z-index: 2;
 }
 
-.scene1-title {
+.hero-title {
   position: absolute;
   z-index: 3;
-  top: 7%;
+  top: 9%;
   left: 0;
   width: 100%;
-  padding: 0 20px;
+  padding: 0 24px;
   text-align: center;
   pointer-events: none;
 }
 
-.scene1-eyebrow {
-  color: #d9a66c;
-  font-size: 10px;
-  font-weight: 500;
-  letter-spacing: 0.35em;
-}
-
-.scene1-title h1 {
-  margin: 14px 0;
-  color: #fff0d9;
-  font-family: 'Cormorant Garamond', serif;
-  font-size: clamp(48px, 7vw, 88px);
+.hero-title h1 {
+  font-family: var(--serif);
+  font-size: clamp(46px, 7vw, 92px);
   font-weight: 400;
-  letter-spacing: 0.015em;
   line-height: 1;
-  text-shadow: 0 4px 25px rgba(0, 0, 0, 0.45);
+  color: #fff0d9;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  animation: titleIn 2.6s var(--ease) 1.4s forwards;
 }
 
-.scene1-title p:last-child {
-  margin-top: 12px;
-  color: #e8d0b2;
-  font-size: 11px;
+.hero-title p {
+  margin-top: 18px;
+  font-size: clamp(12px, 1.2vw, 14px);
   font-weight: 300;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.08em;
+  color: #e5d0b3;
+  opacity: 0;
+  animation: fadeIn 2s ease 2.6s forwards;
 }
 
-@media (max-width: 600px) {
-  .scene1-title {
-    top: 8%;
+@keyframes titleIn {
+  from {
+    opacity: 0;
+    letter-spacing: 0.09em;
   }
-
-  .scene1-eyebrow {
-    font-size: 8px;
-    letter-spacing: 0.2em;
-  }
-
-  .scene1-title h1 {
-    font-size: 54px;
-  }
-
-  .scene1-title p:last-child {
-    font-size: 9px;
+  to {
+    opacity: 1;
+    letter-spacing: 0.01em;
   }
 }
 
-/* =================================
-   SCENE 2 — RANGOLI
-================================= */
+@keyframes fadeIn {
+  to {
+    opacity: 1;
+  }
+}
 
-.scene2 {
-  position: relative;
+.courtyard-caption {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  bottom: 9%;
   width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: #080604;
+  padding: 0 24px;
+  text-align: center;
+  pointer-events: none;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(22px, 2.6vw, 34px);
+  color: #fff0d9;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.8);
 }
 
-.rangoli-container {
+.exit-fade {
+  position: absolute;
+  z-index: 4;
+  inset: auto 0 0 0;
+  height: 45%;
+  pointer-events: none;
+  background: linear-gradient(to bottom, transparent, var(--studio-bg));
+}
+
+.diya-layer {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-}
-
-.rangoli-image {
-  display: block;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  filter: brightness(0.70);
-}
-
-
-
-/* =================================
-   TRAVELLING DIYA — PERSISTENT LAYER
-================================= */
-.diya-journey {
-  position: relative;
-  width: 100%;
-}
-
-.traveling-diya-layer {
-  position: fixed;
-  inset: 0;
-  width: 100%;
-  height: 100vh;
-  height: 100svh;
-  z-index: 1000;
+  z-index: 5;
   pointer-events: none;
-  overflow: hidden;
 }
 
-.traveling-diya-layer canvas {
+.diya-layer canvas {
   display: block;
   width: 100% !important;
   height: 100% !important;
+}
+
+.scroll-cue {
+  position: absolute;
+  z-index: 6;
+  left: 50%;
+  bottom: 4%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--ivory-dim);
   pointer-events: none;
+  animation: cueIn 1.4s ease 7.6s both;
+}
+
+.scroll-cue i {
+  display: block;
+  width: 1px;
+  height: 38px;
+  background: linear-gradient(to bottom, var(--gold), transparent);
+  transform-origin: top;
+  animation: cueLine 2.4s ease-in-out 8s infinite;
+}
+
+@keyframes cueIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes cueLine {
+  0% {
+    transform: scaleY(0);
+  }
+  55% {
+    transform: scaleY(1);
+  }
+  100% {
+    transform: scaleY(1);
+    opacity: 0;
+  }
+}
+
+.greeting-section {
+  position: relative;
+  background: var(--studio-bg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title h1,
+  .hero-title p,
+  .scroll-cue,
+  .scroll-cue i {
+    animation-duration: 0.01s;
+    animation-delay: 0s;
+  }
 }

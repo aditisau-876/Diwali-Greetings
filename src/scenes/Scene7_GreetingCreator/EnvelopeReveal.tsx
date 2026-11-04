@@ -1,324 +1,214 @@
-
-import { useState, useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import {
-    X,
-    Sparkles,
-    Heart,
-    Download,
-    Share2,
-} from "lucide-react";
+import { Download, Heart, Share2, X } from "lucide-react";
+
+import GreetingCard from "./GreetingCard";
 import type { GreetingData } from "../../types/greeting";
 
 interface Props {
-    greeting: GreetingData;
-    onClose: () => void;
-    onDownload: () => Promise<void>;
-    onShare: () => Promise<void>;
+  greeting: GreetingData;
+  busy: "download" | "share" | null;
+  onClose: () => void;
+  onDownload: () => void;
+  onShare: () => void;
+}
+
+type Phase = "closed" | "opening" | "revealed";
+
+const CARD_W = 560;
+const CARD_H = 700;
+
+function useFitScale() {
+  const calc = useCallback(
+    () =>
+      Math.min(
+        1,
+        (window.innerWidth - 40) / CARD_W,
+        (window.innerHeight - 250) / CARD_H,
+      ),
+    [],
+  );
+  const [k, setK] = useState(calc);
+  useEffect(() => {
+    const on = () => setK(calc());
+    window.addEventListener("resize", on);
+    return () => window.removeEventListener("resize", on);
+  }, [calc]);
+  return Math.max(0.35, k);
 }
 
 export default function EnvelopeReveal({
-    greeting,
-    onClose,
-    onDownload,
-    onShare,
+  greeting,
+  busy,
+  onClose,
+  onDownload,
+  onShare,
 }: Props) {
-    const [opened, setOpened] = useState(false);
-    const [showCard, setShowCard] = useState(false);
+  const [phase, setPhase] = useState<Phase>("closed");
+  const timer = useRef<number | null>(null);
+  const k = useFitScale();
 
-    const timerRef = useRef<number | null>(null);
-
-    // Clean up animation timer when the component closes.
-    useEffect(() => {
-        return () => {
-            if (timerRef.current !== null) {
-                window.clearTimeout(timerRef.current);
-            }
-        };
-    }, []);
-
-    // Open envelope and reveal the card after the flap animation.
-    const openEnvelope = () => {
-        if (opened) return;
-
-        setOpened(true);
-
-        timerRef.current = window.setTimeout(() => {
-            setShowCard(true);
-        }, 1050);
+  // Lock page scroll while the overlay is open; Escape closes it.
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+      if (timer.current) window.clearTimeout(timer.current);
     };
+  }, [onClose]);
 
-    // Reset the complete animation.
-    const resetEnvelope = () => {
-        if (timerRef.current !== null) {
-            window.clearTimeout(timerRef.current);
-            timerRef.current = null;
-        }
+  const open = () => {
+    if (phase !== "closed") return;
+    setPhase("opening");
+    timer.current = window.setTimeout(() => setPhase("revealed"), 900);
+  };
 
-        setShowCard(false);
-        setOpened(false);
-    };
+  const revealed = phase === "revealed";
+  const opened = phase !== "closed";
 
-    return (
-        <motion.div
-            className="envelope-overlay"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.4 }}
-            onClick={onClose}
+  return (
+    <motion.div
+      className="reveal-overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Your Diwali greeting"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.35 }}
+      onClick={onClose}
+    >
+      <button
+        className="reveal-close"
+        type="button"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        <X size={20} />
+      </button>
+
+      <div className="reveal-inner" onClick={(e) => e.stopPropagation()}>
+        <p className="reveal-title" aria-live="polite">
+          {revealed ? "Your greeting is ready." : "A greeting is waiting."}
+        </p>
+
+        <div
+          className="reveal-stage"
+          style={{ height: revealed ? CARD_H * k : 230 }}
         >
-            {/* Close button */}
-            <button
-                className="envelope-close"
-                onClick={(event) => {
-                    event.stopPropagation();
-                    onClose();
-                }}
-                aria-label="Close greeting reveal"
-            >
-                <X size={21} />
-            </button>
-
+          {/* Envelope */}
+          <motion.div
+            className={`env ${opened ? "is-open" : ""}`}
+            animate={
+              revealed
+                ? { y: 140, opacity: 0, scale: 0.92 }
+                : { y: 0, opacity: 1, scale: 1 }
+            }
+            transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <div className="env-back" />
+            <div className="env-front" />
             <motion.div
-                className="envelope-experience"
-                onClick={(event) => event.stopPropagation()}
-                initial={{ y: 35, scale: 0.95 }}
-                animate={{ y: 0, scale: 1 }}
-                exit={{ y: 25, scale: 0.95 }}
-                transition={{ duration: 0.55 }}
-            >
-                {/* Heading */}
-                <div className="envelope-heading">
-                    <span className="eyebrow">
-                        A LITTLE SURPRISE FOR YOU
-                    </span>
-
-                    <h2>
-                        {showCard
-                            ? "A wish from the heart."
-                            : "Your greeting awaits."}
-                    </h2>
-
-                    <p>
-                        {showCard
-                            ? "A little happiness, wrapped with love."
-                            : "Open your envelope to reveal your personalised Diwali wishes."}
-                    </p>
-                </div>
-
-                {/* Main envelope stage */}
-                <div
-                    className={`envelope-stage ${opened ? "is-open" : ""
-                        } ${showCard ? "card-revealed" : ""}`}
+              className="env-flap"
+              initial={{ rotateX: 0, zIndex: 3 }}
+              animate={
+                opened
+                  ? { rotateX: -180, zIndex: 0 }
+                  : { rotateX: 0, zIndex: 3 }
+              }
+              transition={{
+                rotateX: { duration: 0.85, ease: [0.65, 0, 0.35, 1] },
+                zIndex: { delay: 0.35, duration: 0 },
+              }}
+              style={{ transformPerspective: 900 }}
+            />
+            <AnimatePresence>
+              {!opened && (
+                <motion.span
+                  className="env-seal"
+                  exit={{ scale: 0.4, opacity: 0 }}
+                  transition={{ duration: 0.3 }}
                 >
-                    {/* Floating golden particles */}
-                    <div
-                        className="envelope-particles"
-                        aria-hidden="true"
-                    >
-                        {Array.from({ length: 18 }).map((_, i) => (
-                            <span
-                                key={i}
-                                style={{
-                                    left: `${8 + ((i * 37) % 84)}%`,
-                                    top: `${10 + ((i * 23) % 75)}%`,
-                                    animationDelay: `${(i % 6) * 0.4}s`,
-                                }}
-                            >
-                                {i % 2 === 0 ? "✦" : "·"}
-                            </span>
-                        ))}
-                    </div>
+                  <Heart size={20} fill="currentColor" />
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </motion.div>
 
-                    {/* GREETING CARD */}
-                    <div className="envelope-insert-position">
-                        <motion.div
-                            className="envelope-insert"
-                            initial={{ y: 0, scale: 0.96 }}
-                            animate={{
-                                y: showCard ? -125 : 0,
-                                scale: showCard ? 1 : 0.96,
-                            }}
-                            transition={{
-                                duration: 1.5,
-                                ease: [0.22, 1, 0.36, 1],
-                            }}
-                        >
-                            <div
-                                className={`insert-card insert-${greeting.template}`}
-                            >
-                                <div className="insert-border">
-                                    <span className="insert-star">✦</span>
-
-                                    <span className="insert-kicker">
-                                        A FESTIVAL OF LIGHT
-                                    </span>
-
-                                    <div className="insert-ornament">
-                                        ✺
-                                    </div>
-
-                                    <h3>Happy</h3>
-                                    <h1>Diwali</h1>
-
-                                    <div className="insert-divider">
-                                        ✦
-                                    </div>
-
-                                    <p className="insert-recipient">
-                                        Dear {greeting.recipient || "Someone Special"},
-                                    </p>
-
-                                    <p className="insert-message">
-                                        {greeting.message}
-                                    </p>
-
-                                    <div className="insert-signature">
-                                        With love &amp; light,
-
-                                        <strong>
-                                            {greeting.sender || "Your Name"}
-                                        </strong>
-                                    </div>
-
-                                    <div className="insert-bottom">
-                                        🪔 ✧ 🪔
-                                    </div>
-                                </div>
-                            </div>
-                        </motion.div>
-                    </div>
-
-                    {/* ENVELOPE BODY */}
-                    <div className="envelope-body">
-                        <div className="envelope-back" />
-
-                        <div className="envelope-left-fold" />
-                        <div className="envelope-right-fold" />
-                        <div className="envelope-bottom-fold" />
-
-                        {/* Front envelope panel */}
-                        <div className="envelope-front">
-                            <div className="envelope-front-border" />
-
-                            <div className="envelope-front-text">
-                                <Sparkles size={22} />
-                                <span>WITH LOVE</span>
-                            </div>
-                        </div>
-
-                        {/* 3D animated triangular flap */}
-                        <div className="envelope-flap-wrapper">
-                            <motion.div
-                                className="envelope-flap"
-                                initial={{ rotateX: 0 }}
-                                animate={{
-                                    rotateX: opened ? -180 : 0,
-                                }}
-                                transition={{
-                                    duration: 1.1,
-                                    ease: [0.65, 0, 0.35, 1],
-                                }}
-                                style={{
-                                    transformPerspective: 1200,
-                                    transformOrigin: "top center",
-                                    transformStyle: "preserve-3d",
-                                    backfaceVisibility: "visible",
-                                }}
-                            >
-                                <div className="flap-ornament">✺</div>
-                            </motion.div>
-                        </div>
-
-                        {/* Wax seal */}
-                        <AnimatePresence>
-                            {!opened && (
-                                <motion.div
-                                    className="wax-seal"
-                                    initial={{ scale: 0, opacity: 0 }}
-                                    animate={{ scale: 1, opacity: 1 }}
-                                    exit={{
-                                        scale: 0.3,
-                                        opacity: 0,
-                                        rotate: 25,
-                                    }}
-                                    transition={{
-                                        duration: 0.35,
-                                        type: "spring",
-                                        stiffness: 200,
-                                    }}
-                                >
-                                    <Heart
-                                        size={24}
-                                        fill="currentColor"
-                                    />
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-                    </div>
-                </div>
-
-                {/* ACTION BUTTONS */}
-                <div className="envelope-actions">
-                    <AnimatePresence mode="wait">
-                        {!opened ? (
-                            <motion.button
-                                key="open"
-                                className="open-envelope-button"
-                                onClick={openEnvelope}
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                exit={{ opacity: 0, y: -10 }}
-                            >
-                                <Sparkles size={16} />
-                                Open your greeting
-                            </motion.button>
-                        ) : showCard ? (
-                            <motion.div
-                                key="revealed"
-                                className="reveal-actions"
-                                initial={{ opacity: 0, y: 15 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ duration: 0.5 }}
-                            >
-                                <p>
-                                    Made with love, just for you.
-                                </p>
-
-                                <div className="reveal-action-buttons">
-                                    <button
-                                        className="download-greeting-button"
-                                        type="button"
-                                        onClick={onDownload}
-                                    >
-                                        <Download size={18} />
-                                        Download PNG
-                                    </button>
-
-                                    <button
-                                        className="share-greeting-button"
-                                        type="button"
-                                        onClick={onShare}
-                                    >
-                                        <Share2 size={18} />
-                                        Share Greeting
-                                    </button>
-                                </div>
-                            </motion.div>
-                        ) : (
-                            <motion.p
-                                key="opening"
-                                className="opening-label"
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                            >
-                                Unfolding your wishes...
-                            </motion.p>
-                        )}
-                    </AnimatePresence>
-                </div>
+          {/* Card */}
+          {revealed && (
+            <motion.div
+              className="reveal-card"
+              style={{ width: CARD_W * k, height: CARD_H * k }}
+              initial={{ opacity: 0, y: 90, scale: 0.4 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              transition={{ duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div
+                className="reveal-card-scale"
+                style={{
+                  width: CARD_W,
+                  height: CARD_H,
+                  transform: `scale(${k})`,
+                }}
+              >
+                <GreetingCard greeting={greeting} />
+              </div>
             </motion.div>
-        </motion.div>
-    );
+          )}
+        </div>
+
+        <div className="reveal-actions">
+          <AnimatePresence mode="wait">
+            {!opened && (
+              <motion.button
+                key="open"
+                className="btn btn-primary"
+                type="button"
+                onClick={open}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                autoFocus
+              >
+                Open the envelope
+              </motion.button>
+            )}
+            {revealed && (
+              <motion.div
+                key="actions"
+                className="reveal-buttons"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.9, duration: 0.6 }}
+              >
+                <button
+                  className="btn btn-primary"
+                  type="button"
+                  onClick={onDownload}
+                  disabled={busy !== null}
+                >
+                  <Download size={17} />
+                  {busy === "download" ? "Preparing image…" : "Download image"}
+                </button>
+                <button
+                  className="btn btn-quiet"
+                  type="button"
+                  onClick={onShare}
+                  disabled={busy !== null}
+                >
+                  <Share2 size={17} />
+                  {busy === "share" ? "Preparing…" : "Share"}
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.div>
+  );
 }

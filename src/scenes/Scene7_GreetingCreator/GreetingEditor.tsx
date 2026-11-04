@@ -11,14 +11,13 @@ export default function GreetingEditor({ greeting, onChange }: Props) {
   return (
     <section className="editor-panel">
       <div className="panel-heading">
-        <span className="eyebrow">MAKE IT PERSONAL</span>
-        <h2>Create your greeting</h2>
-        <p>A little love makes every celebration special.</p>
+        <h2>Your message</h2>
+        <p>Who is it for, and what would you like to say?</p>
       </div>
 
       <label className="field-label">
         <UserRound size={16} />
-        Recipient's name
+        To
       </label>
       <input
         className="greeting-input"
@@ -30,7 +29,7 @@ export default function GreetingEditor({ greeting, onChange }: Props) {
 
       <label className="field-label">
         <Send size={16} />
-        Your name
+        From
       </label>
       <input
         className="greeting-input"
@@ -42,7 +41,7 @@ export default function GreetingEditor({ greeting, onChange }: Props) {
 
       <label className="field-label">
         <MessageSquare size={16} />
-        Your Diwali wishes
+        Message
       </label>
       <textarea
         className="greeting-input greeting-message"

@@ -1,9 +1,16 @@
 import { useMemo, useRef } from "react";
 import { useGLTF, ContactShadows } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
+import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { revealProgress } from "../hooks/useScene1Animation";
 import type { MotionValue } from "framer-motion";
+import {
+  PHASE,
+  RANGOLI_CENTER,
+  TEMPLE_SPOT,
+  coverRect,
+  smootherstep,
+} from "../../../lib/journey";
 
 interface Props {
   started: boolean;
@@ -18,8 +25,9 @@ interface AnimatedMaterial {
 
 // ---------------------------------------------------------------- tweakables
 const DIYA_TILT_X = -0.20;
-const DIYA_Y = -1.75;        // lower = diya further down the page
-const DIYA_SCALE = 0.8;
+const MODEL_DIAMETER = 2.2;  // width of the clay bowl in model units
+const START_SIZE = 0.27;     // diya width in the temple, as a fraction of stage height
+const END_SIZE = 0.1;        // diya width on the rangoli, as a fraction of the image width
 const LIGHT_BASE = 2.2;      // flame light brightness
 const GLOW_BASE = 0.55;      // glow sprite brightness
 // ---------------------------------------------------------------------------
@@ -182,6 +190,13 @@ export default function Diya({ started, travelProgress }: Props) {
   const glowWide = useRef<THREE.Sprite>(null);
   const startTime = useRef<number | null>(null);
   const gust = useRef({ value: 0, target: 0, next: 0 });
+  const landed = useRef(0);
+
+  const { camera, size } = useThree();
+  const scratch = useRef({
+    point: new THREE.Vector3(),
+    dir: new THREE.Vector3(),
+  });
 
   const { scene } = useGLTF("/models/diya/diya.glb");
 
@@ -302,36 +317,49 @@ export default function Diya({ started, travelProgress }: Props) {
 if (group.current) {
   group.current.visible = diyaReveal > 0;
 
-  const rawProgress = travelProgress?.get() ?? 0;
+  // Travel only happens inside its own scroll window. Before it the diya
+  // rests in the temple; after it the diya stays put on the rangoli, so the
+  // diya can never wander into the rest of the page.
+  const raw = travelProgress?.get() ?? 0;
+  const [t0, t1] = PHASE.travel;
+  const t = smootherstep((raw - t0) / (t1 - t0));
 
-  // Start the journey after a little scrolling
-  const progress = THREE.MathUtils.smoothstep(
-    rawProgress,
-    0.08,
-    0.72
-  );
+  const W = size.width;
+  const H = size.height;
+  const rect = coverRect(W, H);
 
-  // Smooth movement
-  const eased = THREE.MathUtils.smoothstep(progress, 0, 1);
+  const startX = W * TEMPLE_SPOT.x;
+  const startY = H * TEMPLE_SPOT.y;
+  const endX = rect.x + rect.w * RANGOLI_CENTER.x;
+  const endY = rect.y + rect.h * RANGOLI_CENTER.y;
 
-  // Move towards the centre of the screen
-  const startY = DIYA_Y;
-  const landingY = 0.05;
+  // A soft rise and sway mid-flight, so it feels carried rather than dragged.
+  const lift = Math.sin(Math.PI * t) * H * 0.05;
+  const sway = Math.sin(Math.PI * 2 * t) * W * 0.012;
 
-  group.current.position.set(
-    0.4,
-    THREE.MathUtils.lerp(startY, landingY, eased),
-    1.0
-  );
+  const px = THREE.MathUtils.lerp(startX, endX, t) + sway;
+  const py = THREE.MathUtils.lerp(startY, endY, t) - lift;
 
-  // Gradually become smaller as it approaches the rangoli
-  const scale = THREE.MathUtils.lerp(1, 0.45, eased);
+  const startPx = Math.min(H * START_SIZE, W * 0.5);
+  const endPx = Math.min(rect.w * END_SIZE, W * 0.4);
+  const diameterPx = THREE.MathUtils.lerp(startPx, endPx, t);
 
-  group.current.scale.setScalar(DIYA_SCALE * scale);
+  // Screen pixel -> point on the z = 0 plane in front of the camera.
+  const { point, dir } = scratch.current;
+  point.set((px / W) * 2 - 1, -(py / H) * 2 + 1, 0.5).unproject(camera);
+  dir.copy(point).sub(camera.position).normalize();
+  const dist = -camera.position.z / dir.z;
+  group.current.position.copy(camera.position).addScaledVector(dir, dist);
+
+  const fov = (camera as THREE.PerspectiveCamera).fov;
+  const worldPerPx =
+    (2 * dist * Math.tan(THREE.MathUtils.degToRad(fov / 2))) / H;
+  group.current.scale.setScalar((diameterPx * worldPerPx) / MODEL_DIAMETER);
+
+  landed.current = smootherstep((t - 0.8) / 0.2);
 }
 
-
-    const g = gust.current;
+const g = gust.current;
     if (elapsed > g.next) {
       g.target = (Math.random() * 2 - 1) * (Math.random() < 0.15 ? 1.6 : 1.0);
       g.next = elapsed + 0.05 + Math.random() * 0.25;
@@ -387,16 +415,14 @@ if (group.current) {
       const s = 2.8 * (0.94 + flicker * 0.06);
       glowWide.current.scale.set(s, s, 1);
       (glowWide.current.material as THREE.SpriteMaterial).opacity =
-        fullFlame * GLOW_BASE * 0.35 * (0.7 + flicker * 0.3);
+        fullFlame * GLOW_BASE * (0.35 + landed.current * 0.3) * (0.7 + flicker * 0.3);
     }
   });
 
   return (
     <group
       ref={group}
-      position={[0, DIYA_Y, 1.0]}
       rotation={[DIYA_TILT_X, Math.PI / 2.5, 0]}
-      scale={DIYA_SCALE}
     >
       <primitive object={model} />
 
