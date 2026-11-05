@@ -1,272 +1,212 @@
+/* Scene 6 — the envelope. Dark by design: the glow comes from the card. */
 
-/* -------------------------------------------------------
-   SCENE 6 - FULL SCREEN DIWALI ENVELOPE
-------------------------------------------------------- */
+.scene6 {
+  --gold: #d4ad62;
+  --ivory: #f4e6cc;
+  --muted: #b9a58f;
 
-.scene6-container {
-    position: relative;
-    width: 100%;
-    min-height: 100svh;
-    padding: 18px 20px 22px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    isolation: isolate;
-    background:
-        radial-gradient(
-            ellipse at 50% 55%,
-            rgba(104, 35, 39, 0.2),
-            transparent 55%
-        ),
-        #080506;
-    color: #f4ebdd;
-    text-align: center;
+  position: relative;
+  width: 100%;
+  height: 100vh;
+  height: 100svh;
+  min-height: 560px;
+  overflow: hidden;
+  isolation: isolate;
+  color: var(--ivory);
+  text-align: center;
+  background: #060405;
 }
 
-/* -------------------------------------------------------
-   HEADING
-------------------------------------------------------- */
+/* warm pool of light + vignette behind the canvas */
+.scene6-ambient {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 52%, rgba(150, 60, 40, 0.22), transparent 70%),
+    radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(0, 0, 0, 0.7) 100%);
+  opacity: 0.85;
+  transition: opacity 1.6s ease;
+  animation: scene6Breathe 7s ease-in-out infinite;
+}
+.scene6[data-opened="true"] .scene6-ambient {
+  opacity: 1;
+}
+@keyframes scene6Breathe {
+  50% {
+    filter: brightness(1.18);
+  }
+}
 
+.scene6-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+.scene6-stage canvas,
+.diwali-3d-canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+  outline: none;
+  touch-action: pan-y; /* keep page scrolling on touch */
+}
+
+/* ---------- heading ---------- */
 .scene6-heading {
-    position: relative;
-    z-index: 2;
-    width: min(900px, 100%);
-    margin: 0 auto;
-    flex: 0 0 auto;
-    text-align: center;
+  position: absolute;
+  z-index: 2;
+  top: clamp(28px, 7svh, 84px);
+  left: 0;
+  width: 100%;
+  padding: 0 24px;
+  pointer-events: none;
+  transition:
+    opacity 0.9s ease 0.15s,
+    transform 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
 }
-
-.scene6-eyebrow {
-    display: block;
-    margin-bottom: 8px;
-    color: #d5aa59;
-    font-family: "Manrope", sans-serif;
-    font-size: 10px;
-    font-weight: 700;
-    letter-spacing: 4px;
-    text-transform: uppercase;
+.scene6[data-opened="true"] .scene6-heading {
+  opacity: 0;
+  transform: translateY(-14px);
 }
-
-.scene6-heading h1 {
-    margin: 0 auto 7px;
-    color: #f4dfbd;
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: clamp(30px, 4vw, 52px);
-    font-weight: 500;
-    line-height: 1.05;
-    text-align: center;
-    text-shadow: 0 4px 28px rgba(203, 151, 75, 0.18);
+.scene6-heading h2 {
+  margin: 0 0 12px;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(34px, 5vw, 62px);
+  font-weight: 500;
+  line-height: 1.05;
+  color: #f6e3c0;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.6);
 }
-
 .scene6-heading p {
-    max-width: 580px;
-    margin: 0 auto;
-    color: #c8b5a5;
-    font-family: "Manrope", sans-serif;
-    font-size: 12px;
-    line-height: 1.6;
-    text-align: center;
+  max-width: 440px;
+  margin: 0 auto;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: clamp(13px, 1.3vw, 15px);
+  line-height: 1.7;
+  color: var(--muted);
 }
 
-/* -------------------------------------------------------
-   3D ENVELOPE CANVAS
-------------------------------------------------------- */
-
-.diwali-3d-envelope {
-    position: relative;
-    z-index: 1;
-    width: min(1500px, 100%);
-    height: clamp(480px, 69svh, 760px);
-    min-height: 0;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    overflow: visible;
+/* ---------- controls ---------- */
+.scene6-controls {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  bottom: clamp(20px, 5svh, 52px);
+  width: 100%;
+  min-height: 56px;
+  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.diwali-3d-envelope canvas {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-    outline: none;
+.scene6-open {
+  position: relative;
+  padding: 15px 34px;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: #2a160c;
+  cursor: pointer;
+  border: 1px solid rgba(255, 224, 160, 0.6);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #e6c47d 0%, #c79a4c 100%);
+  box-shadow:
+    0 0 26px rgba(214, 160, 80, 0.28),
+    0 10px 30px rgba(0, 0, 0, 0.45);
+  transition:
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 0.35s ease,
+    filter 0.35s ease;
+  animation: scene6Invite 3.2s ease-in-out infinite;
 }
-
-/* -------------------------------------------------------
-   OPEN BUTTON
-------------------------------------------------------- */
-
-.diwali-envelope-controls {
-    position: relative;
-    z-index: 3;
-    width: 100%;
-    min-height: 54px;
-    margin: -4px auto 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.scene6-open:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+  box-shadow:
+    0 0 38px rgba(214, 160, 80, 0.45),
+    0 14px 34px rgba(0, 0, 0, 0.5);
 }
-
-.diwali-envelope-open-button {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 13px;
-    min-width: 270px;
-    padding: 15px 28px;
-    border: 1px solid #f0d18e;
-    border-radius: 8px;
-    background: linear-gradient(
-        135deg,
-        #f4d99f 0%,
-        #d9ad65 55%,
-        #b98443 100%
-    );
-    color: #351d20;
-    font-family: "Manrope", sans-serif;
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: 0.25px;
-    cursor: pointer;
+.scene6-open:active {
+  transform: translateY(0) scale(0.98);
+}
+@keyframes scene6Invite {
+  50% {
     box-shadow:
-        0 0 18px rgba(222, 177, 99, 0.22),
-        0 8px 30px rgba(0, 0, 0, 0.3);
-    transition:
-        transform 0.3s ease,
-        box-shadow 0.3s ease,
-        filter 0.3s ease;
+      0 0 40px rgba(214, 160, 80, 0.45),
+      0 10px 30px rgba(0, 0, 0, 0.45);
+  }
 }
 
-.diwali-envelope-open-button span {
-    color: #805323;
-    font-size: 17px;
+.scene6-blessing {
+  margin: 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(19px, 2vw, 24px);
+  font-style: italic;
+  color: #ecd2a0;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.8);
+  animation: scene6Rise 1s cubic-bezier(0.22, 1, 0.36, 1) 3.4s both;
 }
 
-.diwali-envelope-open-button:hover {
-    transform: translateY(-3px);
-    filter: brightness(1.06);
-    box-shadow:
-        0 0 28px rgba(222, 177, 99, 0.4),
-        0 12px 35px rgba(0, 0, 0, 0.35);
+.scene6-replay {
+  padding: 6px 4px;
+  font-family: "Manrope", system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid rgba(212, 173, 98, 0.35);
+  transition: color 0.3s ease, border-color 0.3s ease;
+  animation: scene6Rise 1s cubic-bezier(0.22, 1, 0.36, 1) 3.7s both;
+}
+.scene6-replay:hover {
+  color: var(--ivory);
+  border-color: var(--gold);
 }
 
-.diwali-envelope-open-button:active {
-    transform: translateY(0);
+@keyframes scene6Rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
 }
 
-.diwali-envelope-open-button:focus-visible {
-    outline: 2px solid #f5d99e;
-    outline-offset: 4px;
+.scene6-open:focus-visible,
+.scene6-replay:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
 }
-
-/* -------------------------------------------------------
-   OPENED MESSAGE
-------------------------------------------------------- */
-
-.diwali-envelope-opened-text {
-    margin: 0;
-    color: #e7c991;
-    font-family: "Cormorant Garamond", Georgia, serif;
-    font-size: 20px;
-    font-style: italic;
-    text-align: center;
-    text-shadow: 0 0 18px rgba(222, 177, 99, 0.2);
-}
-
-/* -------------------------------------------------------
-   MEDIUM SCREENS
-------------------------------------------------------- */
-
-@media (max-width: 900px) {
-    .scene6-container {
-        padding: 20px 14px;
-    }
-
-    .diwali-3d-envelope {
-        height: 64svh;
-        min-height: 430px;
-    }
-
-    .scene6-heading h1 {
-        font-size: clamp(30px, 5vw, 44px);
-    }
-}
-
-/* -------------------------------------------------------
-   MOBILE
-------------------------------------------------------- */
 
 @media (max-width: 600px) {
-    .scene6-container {
-        min-height: 100svh;
-        padding: 25px 8px 18px;
-        justify-content: center;
-    }
-
-    .scene6-heading {
-        padding: 0 10px;
-    }
-
-    .scene6-heading .scene6-eyebrow {
-        margin-bottom: 7px;
-        font-size: 9px;
-        letter-spacing: 3px;
-    }
-
-    .scene6-heading h1 {
-        font-size: clamp(29px, 8vw, 38px);
-        line-height: 1.08;
-    }
-
-    .scene6-heading p {
-        max-width: 340px;
-        font-size: 11px;
-    }
-
-    .diwali-3d-envelope {
-        width: 100%;
-        height: 58svh;
-        min-height: 360px;
-        max-height: 540px;
-    }
-
-    .diwali-envelope-controls {
-        min-height: 50px;
-        margin-top: -2px;
-    }
-
-    .diwali-envelope-open-button {
-        width: min(88%, 290px);
-        min-width: 0;
-        padding: 14px 15px;
-        gap: 9px;
-        font-size: 12px;
-    }
-
-    .diwali-envelope-opened-text {
-        font-size: 18px;
-    }
+  .scene6-heading p {
+    max-width: 300px;
+  }
+  .scene6-open {
+    width: min(100%, 300px);
+    padding: 15px 20px;
+  }
 }
 
-/* -------------------------------------------------------
-   SHORT LAPTOP SCREENS
-------------------------------------------------------- */
+@media (max-height: 640px) {
+  .scene6-heading p {
+    display: none;
+  }
+}
 
-@media (min-width: 901px) and (max-height: 750px) {
-    .scene6-container {
-        padding-top: 12px;
-        padding-bottom: 12px;
-    }
-
-    .scene6-heading h1 {
-        font-size: 38px;
-    }
-
-    .diwali-3d-envelope {
-        height: 64svh;
-    }
+@media (prefers-reduced-motion: reduce) {
+  .scene6-ambient,
+  .scene6-open,
+  .scene6-blessing,
+  .scene6-replay {
+    animation: none;
+  }
+  .scene6-heading {
+    transition-duration: 0.01s;
+  }
 }

@@ -1,4 +1,3 @@
-
 export type GreetingTemplate =
   | "royal"
   | "rangoli"
@@ -25,7 +24,8 @@ export interface GreetingData {
 
 export const defaultGreeting: GreetingData = {
   recipient: "Someone Special",
-  sender: "Your Name",
+  // Left empty on purpose: no "Your Name" placeholder is printed on the card.
+  sender: "",
 
   message:
     "May this Diwali bring endless happiness, prosperity, love and light into your life. Wishing you and your family a beautiful festival of lights!",
