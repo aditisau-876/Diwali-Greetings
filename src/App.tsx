@@ -182,8 +182,6 @@ export default function App() {
                 id="scene6"
             >
                 <Scene6
-                    recipient="Someone Special"
-                    sender="Your Name"
                     message="May this Diwali bring happiness, prosperity and endless light into your life."
                     onComplete={handleScene6Complete}
                 />

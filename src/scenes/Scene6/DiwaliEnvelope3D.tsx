@@ -1,680 +1,675 @@
-
-import { useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
+import type { ThreeEvent } from "@react-three/fiber";
 import * as THREE from "three";
-import type { Group } from "three";
 
-interface DiwaliEnvelope3DProps {
-    recipient?: string;
-    sender?: string;
-    message?: string;
-    onComplete?: () => void;
+import { createGreetingCardTexture } from "./greetingCardTexture";
+import {
+  createDotTexture,
+  createFoldTexture,
+  createGlowTexture,
+  createLinerTexture,
+  createSealTexture,
+  createShineTexture,
+  createTriangle,
+} from "./scene6Textures";
+import {
+  CARD_H,
+  CARD_W,
+  DEFAULT_MESSAGE,
+  ENVELOPE_DURATION,
+  ENV_H,
+  ENV_W,
+} from "./scene6Config";
+
+interface Props {
+  opened: boolean;
+  onOpen: () => void;
+  message?: string;
 }
 
-/* -------------------------------------------------------
-   GREETING CARD TEXTURE
-------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   Easing + timeline helpers. Everything on screen is a pure function
+   of one master clock `s` (seconds since opening), so replaying the
+   envelope is just running that clock backwards.
+--------------------------------------------------------------- */
 
-function createGreetingTexture(
-    recipient: string,
-    sender: string,
-    message: string
-) {
-    const canvas = document.createElement("canvas");
-    canvas.width = 1400;
-    canvas.height = 1000;
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+const win = (s: number, a: number, b: number) => clamp01((s - a) / (b - a));
+const easeInOut = (x: number) =>
+  x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+const easeOut = (x: number) => 1 - Math.pow(1 - x, 3);
+const easeOutBack = (x: number) => {
+  const c1 = 1.25;
+  const c3 = c1 + 1;
+  return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+};
+const lerp = THREE.MathUtils.lerp;
 
-    const ctx = canvas.getContext("2d");
+/* ---------------------------------------------------------------
+   Greeting card texture (waits briefly for the web fonts)
+--------------------------------------------------------------- */
 
-    if (!ctx) {
-        throw new Error("Could not create greeting card texture.");
+function useGreetingTexture(message: string) {
+  const [texture, setTexture] = useState<THREE.CanvasTexture | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let created: THREE.CanvasTexture | null = null;
+
+    const fonts = [
+      `italic 500 100px "Cormorant Garamond"`,
+      `500 40px "Manrope"`,
+    ];
+    const ready = Promise.race([
+      Promise.all(fonts.map((f) => document.fonts.load(f))).catch(
+        () => undefined,
+      ),
+      new Promise((resolve) => window.setTimeout(resolve, 2000)),
+    ]);
+
+    ready.then(() => {
+      if (cancelled) return;
+      created = createGreetingCardTexture(message);
+      setTexture(created);
+    });
+
+    return () => {
+      cancelled = true;
+      created?.dispose();
+    };
+  }, [message]);
+
+  return texture;
+}
+
+function usePrefersReducedMotion() {
+  const [reduced] = useState(
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
+  return reduced;
+}
+
+/* ---------------------------------------------------------------
+   Particles
+--------------------------------------------------------------- */
+
+interface SparkBurst {
+  x: number;
+  y: number;
+  z: number;
+}
+interface SparkController {
+  queue: SparkBurst[];
+}
+
+/** Slow golden motes drifting upward behind everything. */
+function Motes({ dot, reduced }: { dot: THREE.Texture; reduced: boolean }) {
+  const COUNT = 70;
+  const ref = useRef<THREE.Points>(null);
+
+  const seed = useMemo(
+    () =>
+      Array.from({ length: COUNT }, (_, i) => ({
+        x: Math.sin(i * 12.9898) * 0.98,
+        y: ((i * 0.6180339) % 1) * 2 - 1,
+        z: -1.2 + ((i * 0.37) % 1) * 1.4,
+        speed: 0.012 + ((i * 0.173) % 1) * 0.02,
+        phase: i * 1.7,
+      })),
+    [],
+  );
+
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new THREE.BufferAttribute(new Float32Array(COUNT * 3), 3),
+    );
+    return g;
+  }, []);
+
+  useFrame((state) => {
+    const points = ref.current;
+    if (!points) return;
+    const { width, height } = state.viewport;
+    points.scale.set(width / 2, height / 2, 1);
+
+    const t = reduced ? 0 : state.clock.elapsedTime;
+    const attr = geometry.getAttribute("position") as THREE.BufferAttribute;
+    seed.forEach((p, i) => {
+      const y = ((p.y + 1 + t * p.speed) % 2) - 1;
+      attr.setXYZ(i, p.x + Math.sin(t * 0.4 + p.phase) * 0.025, y, p.z);
+    });
+    attr.needsUpdate = true;
+  });
+
+  return (
+    <points ref={ref} geometry={geometry} frustumCulled={false}>
+      <pointsMaterial
+        map={dot}
+        color="#ffd9a0"
+        size={0.085}
+        sizeAttenuation
+        transparent
+        opacity={0.55}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </points>
+  );
+}
+
+/** One-shot gold spark bursts (seal breaking, card emerging). */
+function Sparks({
+  controller,
+  dot,
+}: {
+  controller: SparkController;
+  dot: THREE.Texture;
+}) {
+  const COUNT = 180;
+  const matRef = useRef<THREE.PointsMaterial>(null);
+  const state = useRef({
+    pos: new Float32Array(COUNT * 3),
+    vel: new Float32Array(COUNT * 3),
+    age: 99,
+    life: 1.9,
+  });
+
+  const geometry = useMemo(() => {
+    const g = new THREE.BufferGeometry();
+    g.setAttribute(
+      "position",
+      new THREE.BufferAttribute(state.current.pos, 3),
+    );
+    return g;
+  }, []);
+
+  useFrame((_, delta) => {
+    const dt = Math.min(delta, 0.05);
+    const d = state.current;
+
+    while (controller.queue.length) {
+      const b = controller.queue.shift();
+      if (!b) break;
+      for (let i = 0; i < COUNT; i++) {
+        const a = Math.random() * Math.PI * 2;
+        const speed = 0.6 + Math.random() * 2.6;
+        d.pos[i * 3] = b.x + (Math.random() - 0.5) * 0.25;
+        d.pos[i * 3 + 1] = b.y + (Math.random() - 0.5) * 0.15;
+        d.pos[i * 3 + 2] = b.z;
+        d.vel[i * 3] = Math.cos(a) * speed;
+        d.vel[i * 3 + 1] = Math.sin(a) * speed * 0.7 + 0.9;
+        d.vel[i * 3 + 2] = (Math.random() - 0.3) * 1.2;
+      }
+      d.age = 0;
     }
 
-    const background = ctx.createLinearGradient(0, 0, 1400, 1000);
-    background.addColorStop(0, "#fffaf0");
-    background.addColorStop(0.5, "#f7ecd7");
-    background.addColorStop(1, "#ead3a8");
-
-    ctx.fillStyle = background;
-    ctx.fillRect(0, 0, 1400, 1000);
-
-    // Double gold border
-    ctx.strokeStyle = "#a77b35";
-    ctx.lineWidth = 15;
-    ctx.strokeRect(30, 30, 1340, 940);
-
-    ctx.strokeStyle = "#d9b66f";
-    ctx.lineWidth = 4;
-    ctx.strokeRect(58, 58, 1284, 884);
-
-    // Corner ornaments
-    ctx.fillStyle = "#bd914b";
-    ctx.font = "58px Georgia";
-    ctx.textAlign = "center";
-
-    ctx.fillText("✦", 115, 135);
-    ctx.fillText("✦", 1285, 135);
-    ctx.fillText("✦", 115, 895);
-    ctx.fillText("✦", 1285, 895);
-
-    // Top ornament
-    ctx.fillStyle = "#b68a45";
-    ctx.font = "46px Georgia";
-    ctx.fillText("✧  ✦  ✧", 700, 155);
-
-    // Eyebrow
-    ctx.fillStyle = "#98713c";
-    ctx.font = "bold 39px Georgia";
-    ctx.fillText("A FESTIVAL OF LIGHT", 700, 245);
-
-    // Main greeting
-    ctx.fillStyle = "#762a38";
-    ctx.font = "italic 132px Georgia";
-    ctx.fillText("Happy Diwali", 700, 415);
-
-    // Divider
-    ctx.fillStyle = "#b68a45";
-    ctx.font = "58px Georgia";
-    ctx.fillText("✧  ✦  ✧", 700, 505);
-
-    // Recipient
-    ctx.fillStyle = "#783e3b";
-    ctx.font = "bold 52px Georgia";
-    ctx.fillText(
-        `Dear ${recipient || "Someone Special"},`,
-        700,
-        600
-    );
-
-    // Message with automatic wrapping
-    ctx.fillStyle = "#61483b";
-    ctx.font = "42px Georgia";
-
-    const messageText =
-        message ||
-        "May this Diwali bring happiness, prosperity and endless light into your life.";
-
-    const words = messageText.split(/\s+/);
-    const lines: string[] = [];
-    let currentLine = "";
-
-    words.forEach((word) => {
-        const testLine = currentLine
-            ? `${currentLine} ${word}`
-            : word;
-
-        if (
-            ctx.measureText(testLine).width > 1120 &&
-            currentLine
-        ) {
-            lines.push(currentLine);
-            currentLine = word;
-        } else {
-            currentLine = testLine;
-        }
-    });
-
-    if (currentLine) {
-        lines.push(currentLine);
+    const mat = matRef.current;
+    if (d.age >= d.life) {
+      if (mat) mat.opacity = 0;
+      return;
     }
 
-    const visibleLines = lines.slice(0, 4);
-    const lineHeight = 56;
-    const messageStartY =
-        710 - ((visibleLines.length - 1) * lineHeight) / 2;
+    d.age += dt;
+    const drag = 1 - 1.6 * dt;
+    for (let i = 0; i < COUNT; i++) {
+      d.vel[i * 3] *= drag;
+      d.vel[i * 3 + 1] = d.vel[i * 3 + 1] * drag - 0.9 * dt;
+      d.vel[i * 3 + 2] *= drag;
+      d.pos[i * 3] += d.vel[i * 3] * dt;
+      d.pos[i * 3 + 1] += d.vel[i * 3 + 1] * dt;
+      d.pos[i * 3 + 2] += d.vel[i * 3 + 2] * dt;
+    }
+    geometry.getAttribute("position").needsUpdate = true;
+    if (mat) mat.opacity = Math.pow(1 - clamp01(d.age / d.life), 1.5) * 0.95;
+  });
 
-    visibleLines.forEach((line, index) => {
-        ctx.fillText(
-            line,
-            700,
-            messageStartY + index * lineHeight
-        );
-    });
-
-    // Signature
-    ctx.fillStyle = "#9b7138";
-    ctx.font = "italic 38px Georgia";
-    ctx.fillText("With love & light,", 700, 875);
-
-    ctx.fillStyle = "#782d38";
-    ctx.font = "bold 48px Georgia";
-    ctx.fillText(sender || "Your Name", 700, 930);
-
-    const texture = new THREE.CanvasTexture(canvas);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.anisotropy = 8;
-
-    return texture;
+  return (
+    <points geometry={geometry} frustumCulled={false}>
+      <pointsMaterial
+        ref={matRef}
+        map={dot}
+        color="#ffe2a8"
+        size={0.075}
+        sizeAttenuation
+        transparent
+        opacity={0}
+        depthWrite={false}
+        blending={THREE.AdditiveBlending}
+        toneMapped={false}
+      />
+    </points>
+  );
 }
 
-/* -------------------------------------------------------
-   ENVELOPE TRIANGLE FOLDS
-------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   The stage: envelope, card, light
+--------------------------------------------------------------- */
 
-function EnvelopeTriangle({
-    points,
-    color,
-    position,
+function Stage({
+  opened,
+  onOpen,
+  cardTexture,
+  reduced,
 }: {
-    points: [number, number][];
-    color: string;
-    position: [number, number, number];
+  opened: boolean;
+  onOpen: () => void;
+  cardTexture: THREE.Texture | null;
+  reduced: boolean;
 }) {
-    const geometry = useMemo(() => {
-        const shape = new THREE.Shape();
+  const gl = useThree((s) => s.gl);
 
-        shape.moveTo(points[0][0], points[0][1]);
+  const envRef = useRef<THREE.Group>(null);
+  const flapRef = useRef<THREE.Group>(null);
+  const sealRef = useRef<THREE.Group>(null);
+  const ringRef = useRef<THREE.Mesh>(null);
+  const ringMat = useRef<THREE.MeshBasicMaterial>(null);
+  const cardRef = useRef<THREE.Group>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const glowMat = useRef<THREE.MeshBasicMaterial>(null);
+  const lightRef = useRef<THREE.PointLight>(null);
 
-        points.slice(1).forEach(([x, y]) => {
-            shape.lineTo(x, y);
-        });
+  const clock = useRef(0); // master timeline, 0 → ENVELOPE_DURATION
+  const fired = useRef({ seal: false, card: false });
+  const shineClock = useRef(0);
+  const openedRef = useRef(opened);
+  const sparks = useMemo<SparkController>(() => ({ queue: [] }), []);
 
-        shape.closePath();
+  useEffect(() => {
+    openedRef.current = opened;
+    if (opened) gl.domElement.style.cursor = "";
+  }, [opened, gl]);
 
-        return new THREE.ShapeGeometry(shape);
-    }, [points]);
+  useEffect(
+    () => () => {
+      gl.domElement.style.cursor = "";
+    },
+    [gl],
+  );
 
-    return (
-        <mesh
-            geometry={geometry}
-            position={position}
-            renderOrder={2}
-        >
-            <meshStandardMaterial
-                color={color}
-                side={THREE.DoubleSide}
-                roughness={0.58}
-            />
-        </mesh>
+  /* ---- textures & geometry ---- */
+  const assets = useMemo(() => {
+    const left = createTriangle([
+      [-ENV_W / 2, ENV_H / 2],
+      [-ENV_W / 2, -ENV_H / 2],
+      [0, 0],
+    ]);
+    const right = createTriangle([
+      [ENV_W / 2, ENV_H / 2],
+      [ENV_W / 2, -ENV_H / 2],
+      [0, 0],
+    ]);
+    const bottom = createTriangle([
+      [-ENV_W / 2, -ENV_H / 2],
+      [ENV_W / 2, -ENV_H / 2],
+      [0, 0.2],
+    ]);
+    const flap = createTriangle([
+      [-ENV_W / 2, 0],
+      [ENV_W / 2, 0],
+      [0, -ENV_H / 2],
+    ]);
+    return {
+      left,
+      right,
+      bottom,
+      flap,
+      leftMap: createFoldTexture(left.uv, "#6b1e30", "#531727"),
+      rightMap: createFoldTexture(right.uv, "#6b1e30", "#531727"),
+      bottomMap: createFoldTexture(bottom.uv, "#7d2638", "#5e1b2c"),
+      flapMap: createFoldTexture(flap.uv, "#8a2e42", "#6a2033"),
+      liner: createLinerTexture(),
+      seal: createSealTexture(),
+      dot: createDotTexture(),
+      glow: createGlowTexture(),
+      shine: createShineTexture(),
+    };
+  }, []);
+
+  useEffect(
+    () => () => {
+      Object.values(assets).forEach((value) => {
+        if (value instanceof THREE.Texture) value.dispose();
+        else if ("geometry" in value) value.geometry.dispose();
+      });
+    },
+    [assets],
+  );
+
+  /* ---- interaction ---- */
+  const setHover = (value: boolean) => {
+    if (openedRef.current) return;
+    gl.domElement.style.cursor = value ? "pointer" : "";
+  };
+
+  /* ---- animation ---- */
+  useFrame((state, delta) => {
+    const dt = Math.min(delta, 0.05);
+    const { width: vw, height: vh } = state.viewport;
+    const t = state.clock.elapsedTime;
+
+    const speed = (opened ? 1 : -1.6) * (reduced ? 4 : 1);
+    clock.current = THREE.MathUtils.clamp(
+      clock.current + speed * dt,
+      0,
+      ENVELOPE_DURATION,
     );
-}
+    const s = clock.current;
 
-/* -------------------------------------------------------
-   GOLD WAX SEAL
-------------------------------------------------------- */
+    if (s < 0.05) {
+      fired.current.seal = false;
+      fired.current.card = false;
+    }
 
-function WaxSeal() {
-    return (
-        <group position={[0, 0, 0.25]}>
-            <mesh>
-                <cylinderGeometry args={[0.28, 0.28, 0.09, 64]} />
-                <meshStandardMaterial
-                    color="#b9873e"
-                    metalness={0.7}
-                    roughness={0.3}
-                />
-            </mesh>
+    // layout
+    const es = Math.min((vw * 0.7) / ENV_W, (vh * 0.5) / ENV_H);
+    const fs = Math.min((vw * 0.8) / CARD_W, (vh * 0.64) / CARD_H);
 
-            <mesh position={[0, 0, 0.055]}>
-                <circleGeometry args={[0.22, 6]} />
-                <meshStandardMaterial color="#f1d49a" />
-            </mesh>
+    // phases
+    const idle = 1 - win(s, 0, 0.6);
+    const flapP = easeInOut(win(s, 0.3, 1.3));
+    const lightP = easeInOut(win(s, 0.9, 2.8));
+    const riseP = easeInOut(win(s, 1.2, 2.5));
+    const flyP = win(s, 2.5, 4.1);
+    const flyE = easeInOut(flyP);
+    const dropA = easeInOut(win(s, 1.2, 2.5)) * 0.15;
+    const dropB = easeInOut(win(s, 2.4, 4.0)) * 0.95;
 
-            <mesh position={[0, 0, 0.065]}>
-                <circleGeometry args={[0.105, 6]} />
-                <meshStandardMaterial color="#792b38" />
-            </mesh>
-        </group>
-    );
-}
+    /* envelope */
+    const env = envRef.current;
+    const envY = -vh * 0.03 - (dropA + dropB) * vh;
+    const envScale = es * (1 - 0.15 * dropB);
+    if (env) {
+      env.position.set(0, envY, 0);
+      env.scale.setScalar(envScale);
+      env.rotation.set(0, 0, 0);
+    }
 
-/* -------------------------------------------------------
-   GREETING CARD
-------------------------------------------------------- */
+    if (flapRef.current) {
+      flapRef.current.rotation.x = Math.PI * flapP;
+      flapRef.current.position.z = 0.11 - 0.16 * flapP;
+    }
 
-function GreetingCard({
-    opened,
-    recipient,
-    sender,
-    message,
-}: {
-    opened: boolean;
-    recipient: string;
-    sender: string;
-    message: string;
-}) {
-    const cardRef = useRef<Group>(null);
-    const openingStartedAt = useRef<number | null>(null);
-    const progress = useRef(0);
+    // seal pops, then vanishes
+    if (sealRef.current) {
+      const sc =
+        s < 0.12
+          ? 1 + (s / 0.12) * 0.25
+          : Math.max(0, 1.25 * (1 - win(s, 0.12, 0.4)));
+      sealRef.current.scale.setScalar(sc);
+      sealRef.current.visible = sc > 0.01;
+    }
 
-    const texture = useMemo(
-        () => createGreetingTexture(recipient, sender, message),
-        [recipient, sender, message]
-    );
+    // pulsing hint ring around the seal
+    if (ringRef.current && ringMat.current) {
+      const phase = (t * 0.85) % 1;
+      ringRef.current.scale.setScalar(1 + phase * 1.1);
+      ringMat.current.opacity = (1 - phase) * 0.5 * idle;
+      ringRef.current.visible = idle > 0.01;
+    }
 
-    useFrame((state, delta) => {
-        if (!cardRef.current) return;
+    /* bursts of sparks at two beats */
+    if (opened && !fired.current.seal && s > 0.18) {
+      fired.current.seal = true;
+      sparks.queue.push({ x: 0, y: envY, z: 0.6 });
+    }
+    if (opened && !fired.current.card && s > 1.55) {
+      fired.current.card = true;
+      sparks.queue.push({ x: 0, y: envY + 1.4 * es, z: 0.7 });
+    }
 
-        if (!opened) {
-            openingStartedAt.current = null;
-        } else if (openingStartedAt.current === null) {
-            openingStartedAt.current = state.clock.elapsedTime;
-        }
+    /* card */
+    const card = cardRef.current;
+    let cardX = 0;
+    let cardY = envY;
+    if (card) {
+      const riseLocal = lerp(-0.02, 1.95, riseP);
+      const insideScale = es * (1 - 0.15 * dropB);
+      const insideY = envY + riseLocal * insideScale;
+      const insideZ = 0.04 * es;
 
-        const elapsed =
-            openingStartedAt.current === null
-                ? 0
-                : state.clock.elapsedTime - openingStartedAt.current;
+      const finalY = vh * 0.06;
+      const forward = easeOut(win(s, 2.5, 3.2));
 
-        const targetProgress =
-            opened && elapsed > 0.65 ? 1 : 0;
+      cardX = 0;
+      cardY = lerp(insideY, finalY, flyE);
+      card.position.set(cardX, cardY, lerp(insideZ, 1.4, forward));
+      card.scale.setScalar(lerp(insideScale, fs, easeOutBack(flyP)));
+      card.rotation.set(0, 0, lerp(0.05, 0, flyE));
+      card.visible = s > 0.6;
+    }
 
-        progress.current = THREE.MathUtils.damp(
-            progress.current,
-            targetProgress,
-            2.1,
-            delta
-        );
+    /* shine sweep across the card once it arrives, then occasionally */
+    if (s < 4.0) shineClock.current = 0;
+    else shineClock.current += dt;
+    const sweepPhase = (shineClock.current % 7) / 1.4;
+    const sweeping = s >= 4.0 && sweepPhase <= 1;
+    assets.shine.offset.x = sweeping
+      ? lerp(-0.12, 0.62, easeInOut(sweepPhase))
+      : 0.75;
 
-        const raw = progress.current;
-        const p = raw * raw * (3 - 2 * raw);
+    /* light + halo */
+    if (lightRef.current) {
+      lightRef.current.position.set(0, envY + 0.5 * es, 1.2);
+      lightRef.current.intensity = 14 * lightP * (1 - 0.7 * flyE);
+    }
+    if (glowRef.current && glowMat.current) {
+      glowRef.current.position.set(0, lerp(envY, cardY, flyE), -0.9);
+      const size = lerp(es * 6.5, fs * CARD_H * 2.1, flyE);
+      glowRef.current.scale.set(size, size, 1);
+      glowMat.current.opacity =
+        0.2 + Math.sin(t * 0.8) * 0.03 + 0.5 * lightP;
+    }
+  });
 
-        const slideY = THREE.MathUtils.lerp(0, 0.42, p);
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (!openedRef.current) onOpen();
+  };
 
-        const hover =
-            p > 0.96
-                ? Math.sin(state.clock.elapsedTime * 1.15) * 0.025
-                : 0;
+  return (
+    <>
+      <ambientLight intensity={0.85} />
+      <directionalLight position={[3, 5, 6]} intensity={2.2} color="#ffe9c8" />
+      <pointLight
+        position={[-4, 1, 3]}
+        intensity={30}
+        distance={14}
+        decay={1.6}
+        color="#d99b48"
+      />
+      <pointLight
+        ref={lightRef}
+        position={[0, 0, 1.2]}
+        intensity={0}
+        distance={12}
+        decay={1.2}
+        color="#ffc66d"
+      />
 
-        cardRef.current.position.x = 0;
-        cardRef.current.position.y = slideY + hover;
-
-        cardRef.current.position.z = THREE.MathUtils.lerp(
-            -0.38,
-            0.62,
-            p
-        );
-
-        cardRef.current.rotation.set(0, 0, 0);
-
-        // Preserve the enlarged, straight card size.
-        const scale = THREE.MathUtils.lerp(0.82, 0.94, p);
-        cardRef.current.scale.setScalar(scale);
-    });
-
-    return (
-        <group
-            ref={cardRef}
-            position={[0, 0, -0.38]}
-            scale={0.82}
-        >
-            {/* Gold card backing */}
-            <mesh>
-                <boxGeometry args={[3.65, 2.60, 0.065]} />
-                <meshStandardMaterial
-                    color="#d5aa59"
-                    metalness={0.62}
-                    roughness={0.27}
-                    emissive="#9c641e"
-                    emissiveIntensity={0.16}
-                />
-            </mesh>
-
-            {/* Printed ivory card */}
-            <mesh position={[0, 0, 0.04]}>
-                <planeGeometry args={[3.57, 2.52]} />
-                <meshStandardMaterial
-                    map={texture}
-                    roughness={0.62}
-                    side={THREE.DoubleSide}
-                    emissive="#fff0cf"
-                    emissiveIntensity={0.08}
-                />
-            </mesh>
-
-            {/* Gold accent */}
-            <mesh position={[0, 1.08, 0.05]}>
-                <boxGeometry args={[0.5, 0.012, 0.008]} />
-                <meshStandardMaterial
-                    color="#b78b42"
-                    metalness={0.7}
-                    roughness={0.25}
-                />
-            </mesh>
-        </group>
-    );
-}
-
-/* -------------------------------------------------------
-   FLOATING GOLDEN PARTICLES
-------------------------------------------------------- */
-
-function FloatingParticles() {
-    const particlesRef = useRef<Group>(null);
-
-    const particles = useMemo(
-        () =>
-            Array.from({ length: 120 }, (_, index) => {
-                const side = index % 2 === 0 ? -1 : 1;
-                const row = Math.floor(index / 2);
-
-                return {
-                    x: side * (2.8 + (row % 8) * 0.16),
-                    y: -2.5 + ((row * 0.43) % 5),
-                    z: -0.5 + (row % 4) * 0.15,
-                    size: 0.014 + (row % 5) * 0.008,
-                    speed: 0.35 + (row % 5) * 0.12,
-                };
-            }),
-        []
-    );
-
-    useFrame((state) => {
-        if (!particlesRef.current) return;
-
-        particlesRef.current.children.forEach((particle, index) => {
-            const data = particles[index];
-
-            particle.position.y =
-                data.y +
-                Math.sin(
-                    state.clock.elapsedTime * data.speed + index
-                ) * 0.13;
-
-            particle.position.x =
-                data.x +
-                Math.sin(
-                    state.clock.elapsedTime * 0.4 + index
-                ) * 0.04;
-        });
-    });
-
-    return (
-        <group ref={particlesRef}>
-            {particles.map((particle, index) => (
-                <mesh
-                    key={index}
-                    position={[
-                        particle.x,
-                        particle.y,
-                        particle.z,
-                    ]}
-                >
-                    <sphereGeometry
-                        args={[particle.size, 12, 12]}
-                    />
-
-                    <meshStandardMaterial
-                        color={
-                            index % 3 === 0
-                                ? "#fff0c5"
-                                : "#e9bd6d"
-                        }
-                        emissive="#a97930"
-                        emissiveIntensity={0.65}
-                    />
-                </mesh>
-            ))}
-        </group>
-    );
-}
-
-/* -------------------------------------------------------
-   ENVELOPE DECORATIVE GOLD BORDER
-------------------------------------------------------- */
-
-function EnvelopeGoldDetails() {
-    const goldMaterial = (
-        <meshStandardMaterial
-            color="#d6ad62"
-            metalness={0.8}
-            roughness={0.25}
-            emissive="#9b692c"
-            emissiveIntensity={0.18}
+      {/* halo */}
+      <mesh ref={glowRef} position={[0, 0, -0.9]}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          ref={glowMat}
+          map={assets.glow}
+          transparent
+          opacity={0.2}
+          depthWrite={false}
+          blending={THREE.AdditiveBlending}
+          toneMapped={false}
         />
-    );
+      </mesh>
 
-    return (
-        <group position={[0, 0, 0.19]}>
-            {/* Top and bottom borders */}
-            <mesh position={[0, 1.18, 0]}>
-                <boxGeometry args={[3.65, 0.025, 0.018]} />
-                {goldMaterial}
-            </mesh>
+      <Motes dot={assets.dot} reduced={reduced} />
 
-            <mesh position={[0, -1.18, 0]}>
-                <boxGeometry args={[3.65, 0.025, 0.018]} />
-                {goldMaterial}
-            </mesh>
+      {/* envelope */}
+      <group
+        ref={envRef}
+        onClick={onClick}
+        onPointerOver={(e) => {
+          e.stopPropagation();
+          setHover(true);
+        }}
+        onPointerOut={() => setHover(false)}
+      >
+        {/* paper edge */}
+        <mesh position={[0, 0, -0.03]}>
+          <boxGeometry args={[ENV_W + 0.03, ENV_H + 0.03, 0.05]} />
+          <meshStandardMaterial color="#220a12" roughness={0.8} />
+        </mesh>
 
-            {/* Side borders */}
-            <mesh position={[-1.82, 0, 0]}>
-                <boxGeometry args={[0.025, 2.35, 0.018]} />
-                {goldMaterial}
-            </mesh>
+        {/* inside back */}
+        <mesh>
+          <planeGeometry args={[ENV_W, ENV_H]} />
+          <meshStandardMaterial
+            map={assets.liner}
+            roughness={0.75}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
 
-            <mesh position={[1.82, 0, 0]}>
-                <boxGeometry args={[0.025, 2.35, 0.018]} />
-                {goldMaterial}
-            </mesh>
+        {/* front folds */}
+        <mesh geometry={assets.left.geometry} position={[0, 0, 0.08]}>
+          <meshStandardMaterial
+            map={assets.leftMap}
+            roughness={0.55}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        <mesh geometry={assets.right.geometry} position={[0, 0, 0.085]}>
+          <meshStandardMaterial
+            map={assets.rightMap}
+            roughness={0.55}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+        <mesh geometry={assets.bottom.geometry} position={[0, 0, 0.1]}>
+          <meshStandardMaterial
+            map={assets.bottomMap}
+            roughness={0.5}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
 
-            {/* Four gold corner ornaments */}
-            {[
-                [-1.65, 1.02, 0],
-                [1.65, 1.02, 0],
-                [-1.65, -1.02, 0],
-                [1.65, -1.02, 0],
-            ].map((position, index) => (
-                <mesh
-                    key={index}
-                    position={
-                        position as [number, number, number]
-                    }
-                >
-                    <sphereGeometry args={[0.065, 16, 16]} />
-                    {goldMaterial}
-                </mesh>
-            ))}
+        {/* flap: maroon outside, patterned lining inside */}
+        <group ref={flapRef} position={[0, ENV_H / 2, 0.11]}>
+          <mesh geometry={assets.flap.geometry}>
+            <meshStandardMaterial
+              map={assets.flapMap}
+              roughness={0.5}
+              side={THREE.FrontSide}
+            />
+          </mesh>
+          <mesh geometry={assets.flap.geometry}>
+            <meshStandardMaterial
+              map={assets.liner}
+              roughness={0.7}
+              side={THREE.BackSide}
+            />
+          </mesh>
         </group>
-    );
+
+        {/* gold seal */}
+        <group ref={sealRef} position={[0, -0.02, 0.2]}>
+          <mesh>
+            <circleGeometry args={[0.27, 48]} />
+            <meshStandardMaterial
+              map={assets.seal}
+              metalness={0.55}
+              roughness={0.35}
+            />
+          </mesh>
+          <mesh>
+            <torusGeometry args={[0.27, 0.022, 12, 48]} />
+            <meshStandardMaterial
+              color="#c99a4b"
+              metalness={0.8}
+              roughness={0.3}
+            />
+          </mesh>
+          <mesh ref={ringRef} position={[0, 0, -0.01]}>
+            <ringGeometry args={[0.3, 0.33, 48]} />
+            <meshBasicMaterial
+              ref={ringMat}
+              color="#ffd89a"
+              transparent
+              opacity={0.5}
+              depthWrite={false}
+              blending={THREE.AdditiveBlending}
+              toneMapped={false}
+            />
+          </mesh>
+        </group>
+      </group>
+
+      {/* greeting card (separate from the envelope so it can grow freely) */}
+      <group ref={cardRef} visible={false}>
+        <mesh>
+          <boxGeometry args={[CARD_W + 0.05, CARD_H + 0.05, 0.035]} />
+          <meshStandardMaterial
+            color="#d5aa59"
+            metalness={0.65}
+            roughness={0.3}
+            emissive="#7a4e16"
+            emissiveIntensity={0.25}
+          />
+        </mesh>
+        <mesh position={[0, 0, 0.0185]}>
+          <planeGeometry args={[CARD_W, CARD_H]} />
+          <meshBasicMaterial
+            map={cardTexture ?? undefined}
+            color={cardTexture ? "#ffffff" : "#f3e6c8"}
+            toneMapped={false}
+          />
+        </mesh>
+        <mesh position={[0, 0, 0.022]}>
+          <planeGeometry args={[CARD_W, CARD_H]} />
+          <meshBasicMaterial
+            map={assets.shine}
+            transparent
+            opacity={0.6}
+            depthWrite={false}
+            blending={THREE.AdditiveBlending}
+            toneMapped={false}
+          />
+        </mesh>
+      </group>
+
+      <Sparks controller={sparks} dot={assets.dot} />
+    </>
+  );
 }
 
-/* -------------------------------------------------------
-   COMPLETE ENVELOPE MODEL
-------------------------------------------------------- */
-
-function EnvelopeModel({
-    opened,
-    recipient,
-    sender,
-    message,
-}: {
-    opened: boolean;
-    recipient: string;
-    sender: string;
-    message: string;
-}) {
-    const flapRef = useRef<Group>(null);
-
-    useFrame((_, delta) => {
-        if (!flapRef.current) return;
-
-        flapRef.current.rotation.x = THREE.MathUtils.damp(
-            flapRef.current.rotation.x,
-            opened ? Math.PI : 0,
-            2.4,
-            delta
-        );
-    });
-
-    return (
-        <group>
-            <GreetingCard
-                opened={opened}
-                recipient={recipient}
-                sender={sender}
-                message={message}
-            />
-
-            {/* Main envelope body */}
-            <mesh position={[0, 0, 0]}>
-                <boxGeometry args={[3.8, 2.5, 0.2]} />
-                <meshStandardMaterial
-                    color="#541b29"
-                    roughness={0.48}
-                    metalness={0.2}
-                />
-            </mesh>
-
-            {/* Left fold */}
-            <EnvelopeTriangle
-                points={[
-                    [-1.9, 1.25],
-                    [-1.9, -1.25],
-                    [0, 0],
-                ]}
-                color="#702532"
-                position={[0, 0, 0.115]}
-            />
-
-            {/* Right fold */}
-            <EnvelopeTriangle
-                points={[
-                    [1.9, 1.25],
-                    [1.9, -1.25],
-                    [0, 0],
-                ]}
-                color="#702532"
-                position={[0, 0, 0.12]}
-            />
-
-            {/* Bottom fold */}
-            <EnvelopeTriangle
-                points={[
-                    [-1.9, -1.25],
-                    [1.9, -1.25],
-                    [0, 0.2],
-                ]}
-                color="#852c3b"
-                position={[0, 0, 0.16]}
-            />
-
-            {/* Gold decorative details */}
-            <EnvelopeGoldDetails />
-
-            {/* Opening top flap */}
-            <group
-                ref={flapRef}
-                position={[0, 1.25, 0.22]}
-            >
-                <EnvelopeTriangle
-                    points={[
-                        [-1.9, 0],
-                        [1.9, 0],
-                        [0, -1.25],
-                    ]}
-                    color="#913b46"
-                    position={[0, 0, 0]}
-                />
-            </group>
-
-            {!opened && <WaxSeal />}
-        </group>
-    );
-}
-
-/* -------------------------------------------------------
-   MAIN SCENE 3D COMPONENT
-------------------------------------------------------- */
+/* ---------------------------------------------------------------
+   Public component
+--------------------------------------------------------------- */
 
 export default function DiwaliEnvelope3D({
-    recipient = "Someone Special",
-    sender = "Your Name",
-    message = "May this Diwali bring happiness, prosperity and endless light into your life.",
-    onComplete,
-}: DiwaliEnvelope3DProps) {
-    const [opened, setOpened] = useState(false);
+  opened,
+  onOpen,
+  message = DEFAULT_MESSAGE,
+}: Props) {
+  const texture = useGreetingTexture(message);
+  const reduced = usePrefersReducedMotion();
+  const handleOpen = useCallback(() => onOpen(), [onOpen]);
 
-    const handleOpen = () => {
-        if (opened) return;
-
-        setOpened(true);
-
-        window.setTimeout(() => {
-            onComplete?.();
-        }, 3000);
-    };
-
-    return (
-        <div className="diwali-3d-envelope">
-            <Canvas
-                camera={{
-                    position: [0, 0, 7.5],
-                    fov: 42,
-                }}
-                dpr={[1, 2]}
-                gl={{
-                    antialias: true,
-                    alpha: true,
-                }}
-            >
-                <ambientLight intensity={1.2} />
-
-                <directionalLight
-                    position={[3, 5, 6]}
-                    intensity={2.5}
-                    color="#fff0d0"
-                />
-
-                <pointLight
-                    position={[-3, 1, 3]}
-                    intensity={1.8}
-                    color="#d99b48"
-                />
-
-                <pointLight
-                    position={[3, -2, 2]}
-                    intensity={1}
-                    color="#8e3443"
-                />
-
-                <pointLight
-                    position={[0, 1.5, 3]}
-                    intensity={1.4}
-                    color="#f5c978"
-                />
-
-                <pointLight
-                    position={[0, 0, 4]}
-                    intensity={2.2}
-                    distance={8}
-                    color="#e9b65e"
-                />
-
-                {/* Sparkles stay outside the enlarged envelope group */}
-                <FloatingParticles />
-
-                {/* Enlarged model shifted down to prevent card clipping */}
-                <group
-                    position={[0, -0.42, 0]}
-                    scale={1.75}
-                >
-                    <EnvelopeModel
-                        opened={opened}
-                        recipient={recipient}
-                        sender={sender}
-                        message={message}
-                    />
-                </group>
-            </Canvas>
-
-            <div className="diwali-envelope-controls">
-                {!opened ? (
-                    <button
-                        type="button"
-                        onClick={handleOpen}
-                        className="diwali-envelope-open-button"
-                    >
-                        <span>✦</span>
-                        Open your Diwali greeting
-                        <span>✦</span>
-                    </button>
-                ) : (
-                    <p className="diwali-envelope-opened-text">
-                        A little happiness, wrapped with love.
-                    </p>
-                )}
-            </div>
-        </div>
-    );
+  return (
+    <Canvas
+      className="diwali-3d-canvas"
+      camera={{ position: [0, 0, 7.5], fov: 40 }}
+      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: true }}
+    >
+      <Stage
+        opened={opened}
+        onOpen={handleOpen}
+        cardTexture={texture}
+        reduced={reduced}
+      />
+    </Canvas>
+  );
 }

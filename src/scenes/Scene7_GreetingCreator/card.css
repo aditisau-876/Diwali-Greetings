@@ -1,0 +1,260 @@
+/* Greeting card — one layout, six palettes.
+   Everything is sized in cqw (a percentage of the card's own width), so the
+   card looks identical in the preview, the envelope and the exported PNG. */
+
+.gcard {
+  --bg1: #4a1424;
+  --bg2: #290a13;
+  --glow: rgba(215, 165, 78, 0.22);
+  --accent: #d7a54e;
+  --title: #f3d492;
+  --text: #ecdcc4;
+  --muted: #bfa98a;
+
+  position: relative;
+  container-type: inline-size;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: 6px;
+  color: var(--text);
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 0%, var(--glow), transparent 62%),
+    linear-gradient(165deg, var(--bg1), var(--bg2));
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+
+/* fixed size when shown in the envelope or exported */
+.export-stage .gcard,
+.reveal-card-scale .gcard {
+  width: 560px;
+  height: 700px;
+  aspect-ratio: auto;
+  margin: 0;
+}
+
+/* ---------- palettes ---------- */
+.t-royal { /* defaults above */ }
+
+.t-rangoli {
+  --bg1: #43185c;
+  --bg2: #230a36;
+  --glow: rgba(243, 154, 168, 0.22);
+  --accent: #f0a9b4;
+  --title: #ffe0a8;
+  --text: #f0dfe9;
+  --muted: #cfaec3;
+}
+
+.t-midnight {
+  --bg1: #10214a;
+  --bg2: #060d22;
+  --glow: rgba(150, 175, 235, 0.2);
+  --accent: #e9c46a;
+  --title: #fff1c9;
+  --text: #dfe6f7;
+  --muted: #a9b6d6;
+  background-image:
+    radial-gradient(circle at 12% 16%, rgba(255, 255, 255, 0.8) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 86% 22%, rgba(255, 255, 255, 0.6) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 20% 72%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
+    radial-gradient(circle at 90% 78%, rgba(255, 255, 255, 0.7) 0 1.2px, transparent 1.8px),
+    radial-gradient(circle at 70% 10%, rgba(255, 255, 255, 0.5) 0 1px, transparent 1.6px),
+    radial-gradient(ellipse at 50% 0%, var(--glow), transparent 62%),
+    linear-gradient(165deg, var(--bg1), var(--bg2));
+}
+
+.t-minimal {
+  --bg1: #f8eedb;
+  --bg2: #ebdab9;
+  --glow: rgba(255, 255, 255, 0.6);
+  --accent: #b48a45;
+  --title: #5b1a28;
+  --text: #4f392e;
+  --muted: #8a6a3f;
+}
+
+.t-festival {
+  --bg1: #8d2c1d;
+  --bg2: #561310;
+  --glow: rgba(255, 184, 90, 0.26);
+  --accent: #f0b85a;
+  --title: #ffe3a6;
+  --text: #f6e2cf;
+  --muted: #dcb48c;
+}
+
+.t-peacock {
+  --bg1: #0e4d4b;
+  --bg2: #062e2d;
+  --glow: rgba(224, 182, 92, 0.2);
+  --accent: #e0b65c;
+  --title: #f7e4ab;
+  --text: #dff0ec;
+  --muted: #9fc7bf;
+}
+
+/* ---------- frame + corners ---------- */
+.gc-frame {
+  position: absolute;
+  inset: 4cqw;
+  border: 0.4cqw solid var(--accent);
+  border-radius: 1cqw;
+  opacity: 0.85;
+  pointer-events: none;
+}
+.gc-frame-inner {
+  inset: 5.6cqw;
+  border-width: 0.18cqw;
+  opacity: 0.4;
+}
+
+.gc-corner {
+  position: absolute;
+  width: 9cqw;
+  height: 9cqw;
+  color: var(--accent);
+  pointer-events: none;
+}
+.gc-corner-tl { top: 4cqw; left: 4cqw; }
+.gc-corner-tr { top: 4cqw; right: 4cqw; transform: rotate(90deg); }
+.gc-corner-br { bottom: 4cqw; right: 4cqw; transform: rotate(180deg); }
+.gc-corner-bl { bottom: 4cqw; left: 4cqw; transform: rotate(270deg); }
+
+/* ---------- content ---------- */
+.gc-inner {
+  position: absolute;
+  inset: 0;
+  padding: 9cqw 12cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.2cqw;
+  font-family: var(--serif);
+}
+
+.gc-inner p {
+  margin: 0;
+}
+
+.gc-emblem {
+  width: 18cqw;
+  height: 18cqw;
+  flex: none;
+  color: var(--accent);
+}
+.gc-emblem svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.gc-kicker {
+  font-size: 3.2cqw;
+  font-style: italic;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+}
+
+.gc-top {
+  margin-top: 1cqw !important;
+  font-size: 6.6cqw;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.1;
+  color: var(--title);
+}
+
+.gc-title {
+  font-size: 15cqw;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--title);
+  text-shadow: 0 0.6cqw 3cqw rgba(0, 0, 0, 0.25);
+}
+.t-minimal .gc-title {
+  font-size: 11.5cqw;
+  text-shadow: none;
+}
+
+.gc-divider {
+  width: 32cqw;
+  height: 2cqw;
+  margin: 1.2cqw 0 0.6cqw;
+  flex: none;
+  color: var(--accent);
+}
+
+.gc-to {
+  font-size: 4cqw;
+  font-style: italic;
+  color: var(--title);
+}
+
+.gc-message {
+  max-width: 100%;
+  font-size: 4.1cqw;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.msg-s .gc-message { font-size: 4.6cqw; }
+.msg-m .gc-message { font-size: 4.1cqw; }
+.msg-l .gc-message { font-size: 3.6cqw; }
+.msg-xl .gc-message { font-size: 3.2cqw; line-height: 1.45; }
+
+.msg-l .gc-emblem,
+.msg-xl .gc-emblem { width: 13cqw; height: 13cqw; }
+.msg-l .gc-title,
+.msg-xl .gc-title { font-size: 13cqw; }
+.msg-l.t-minimal .gc-title,
+.msg-xl.t-minimal .gc-title { font-size: 10cqw; }
+
+.gc-sign {
+  margin-top: 1.6cqw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4cqw;
+}
+.gc-sign span {
+  font-size: 3.4cqw;
+  font-style: italic;
+  color: var(--muted);
+}
+.gc-sign strong {
+  font-size: 5.4cqw;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.15;
+  color: var(--title);
+}
+
+.gc-foot {
+  margin-top: 1cqw;
+  flex: none;
+  color: var(--accent);
+}
+.gc-dots {
+  display: block;
+  width: 10cqw;
+  height: 1.4cqw;
+}
+.gc-diyas {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2.4cqw;
+}
+.gc-diyas svg {
+  display: block;
+  width: 9cqw;
+  height: auto;
+}
+.gc-diyas svg:nth-child(2) {
+  width: 11cqw;
+}
