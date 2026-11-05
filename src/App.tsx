@@ -11,6 +11,7 @@ import {
 
 import Scene1 from "./scenes/Scene1/Scene1";
 import Scene2 from "./scenes/Scene2/Scene2";
+import Scene4 from "./scenes/Scene4/Scene4";
 import Scene6 from "./scenes/Scene6/Scene6";
 
 import TravelingDiyaCanvas from "./scenes/Scene1/TravelingDiyaCanvas";
@@ -34,7 +35,7 @@ export default function App() {
         offset: ["start start", "end end"],
     });
 
-    // One spring drives the diya and both scenes.
+    // One spring drives the diya and all scenes.
     const progress = useSpring(scrollYProgress, {
         stiffness: 110,
         damping: 28,
@@ -126,6 +127,9 @@ export default function App() {
                     <div className="stage-layer courtyard-layer">
                         <Scene2 progress={progress} />
                     </div>
+
+                    {/* SCENE 4 - PALACE REVEAL */}
+                    <Scene4 progress={progress} />
 
                     <motion.header
                         className="hero-title"
