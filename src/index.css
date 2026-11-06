@@ -239,3 +239,39 @@ button {
     animation-delay: 0s;
   }
 }
+
+.background-music-control {
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 9999;
+
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    padding: 10px 14px;
+    border: 1px solid rgba(230, 185, 100, 0.4);
+    border-radius: 40px;
+
+    background: rgba(20, 13, 7, 0.85);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.background-music-control button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    background: transparent;
+    color: #f5cf85;
+    cursor: pointer;
+}
+
+.background-music-control input {
+    width: 75px;
+    accent-color: #d9a441;
+}

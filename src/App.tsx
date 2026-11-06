@@ -7,7 +7,7 @@ import {
     useSpring,
     useTransform,
 } from "framer-motion";
-
+import BackgroundMusic from "./components/BackgroundMusic";
 import Scene1 from "./scenes/Scene1/Scene1";
 import Scene2 from "./scenes/Scene2/Scene2";
 import Scene4 from "./scenes/Scene4/Scene4";
@@ -85,6 +85,7 @@ export default function App() {
 
     return (
         <main className="experience">
+            <BackgroundMusic />
             {/* MAIN DIWALI JOURNEY: scenes 1, 2, 4 and 5 share one pinned stage */}
             <div ref={journeyRef} className="journey">
                 <div className="journey-stage">
