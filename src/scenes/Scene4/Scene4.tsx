@@ -1,91 +1,109 @@
+import { useEffect } from "react";
 import { motion, useTransform } from "framer-motion";
 import type { MotionValue } from "framer-motion";
+import { PHASE } from "../../lib/journey";
 import "./Scene4.css";
 
 interface Scene4Props {
   progress: MotionValue<number>;
 }
 
-export default function Scene4({ progress }: Scene4Props) {
-  // Scene 4 container fades in gently starting at 0.82
-  const sceneOpacity = useTransform(
-    progress,
-    [0.82, 0.86, 1],
-    [0, 1, 1]
-  );
+const FRAMES = [
+  {
+    src: "/images/courtyard-rangoli-farther.png",
+    alt: "The diya glowing at the heart of the rangoli",
+    window: PHASE.img1,
+    until: PHASE.img2[1],
+  },
+  {
+    src: "/images/courtyard-rangoli-farther-1.png",
+    alt: "The courtyard opens up and fireworks begin in the sky",
+    window: PHASE.img2,
+    until: PHASE.img3[1],
+  },
+  {
+    src: "/images/courtyard-rangoli-farther-2.png",
+    alt: "The camera drifts back toward the palace",
+    window: PHASE.img3,
+    until: PHASE.img4[1],
+  },
+  {
+    src: "/images/courtyard-rangoli-farther-3.png",
+    alt: "The grand palace lit up for Diwali",
+    window: PHASE.img4,
+    until: PHASE.fireworks[1] + 0.1,
+  },
+] as const;
 
-  // Widen the input windows and create long, overlapping crossfades 
-  // so the images blend slowly and smoothly over more scroll distance.
+const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
+const smooth = (x: number) => {
+  const t = clamp01(x);
+  return t * t * (3 - 2 * t);
+};
+const easeOut = (x: number) => 1 - Math.pow(1 - clamp01(x), 3);
 
-  const image1Opacity = useTransform(
-    progress,
-    [0.82, 0.87, 0.91, 0.94],
-    [0, 1, 1, 0]
-  );
+type FrameData = (typeof FRAMES)[number];
 
-  const image2Opacity = useTransform(
-    progress,
-    [0.89, 0.92, 0.95, 0.98],
-    [0, 1, 1, 0]
-  );
+function Frame({
+  frame,
+  progress,
+}: {
+  frame: FrameData;
+  progress: MotionValue<number>;
+}) {
+  const [a, b] = frame.window;
 
-  const image3Opacity = useTransform(
-    progress,
-    [0.93, 0.96, 0.99, 1.0],
-    [0, 1, 1, 0]
-  );
+  // Each frame dissolves in *over* the previous one and then simply stays.
+  // Nothing fades out, so two half-transparent images never dim the middle
+  // of a transition. Scrolling back just reverses it.
+  const opacity = useTransform(progress, (p) => smooth((p - a) / (b - a)));
 
-  const image4Opacity = useTransform(
-    progress,
-    [0.97, 0.995, 1.0],
-    [0, 1, 1]
-  );
-
-  // Ultra-subtle scale effect to prevent jarring motion on small scrolls
-  const imageScale = useTransform(
-    progress,
-    [0.82, 1.0],
-    [1.03, 1.0]
-  );
+  // A slow camera pull-back: the new frame starts a little larger (so it
+  // lines up with the one it is replacing) and settles to its natural size.
+  const scale = useTransform(progress, (p) => {
+    const settle = easeOut((p - a) / (frame.until - a));
+    return 1 + 0.13 * (1 - settle);
+  });
+  const y = useTransform(progress, (p) => {
+    const settle = easeOut((p - a) / (frame.until - a));
+    return `${-3.5 * (1 - settle)}%`;
+  });
 
   return (
-    <motion.div
-      className="scene4-container"
-      style={{ opacity: sceneOpacity }}
-    >
-      <motion.img
-        src="/images/courtyard-rangoli-farther.png"
-        alt="Diwali-lit palace courtyard"
-        className="scene4-image"
-        style={{ opacity: image1Opacity, scale: imageScale }}
-        draggable={false}
-      />
+    <motion.img
+      src={frame.src}
+      alt={frame.alt}
+      className="scene4-image"
+      style={{ opacity, scale, y }}
+      draggable={false}
+      decoding="async"
+    />
+  );
+}
 
-      <motion.img
-        src="/images/courtyard-rangoli-farther-1.png"
-        alt="An expanded view of the illuminated courtyard"
-        className="scene4-image"
-        style={{ opacity: image2Opacity, scale: imageScale }}
-        draggable={false}
-      />
+export default function Scene4({ progress }: Scene4Props) {
+  // The vignette only arrives together with the first frame, so Scenes 1 and
+  // 2 keep exactly the look they had before.
+  const [s0, s1] = PHASE.img1;
+  const shadeOpacity = useTransform(progress, (p) =>
+    smooth((p - s0) / (s1 - s0))
+  );
 
-      <motion.img
-        src="/images/courtyard-rangoli-farther-2.png"
-        alt="The camera approaching the palace"
-        className="scene4-image"
-        style={{ opacity: image3Opacity, scale: imageScale }}
-        draggable={false}
-      />
+  // Decode every frame up front so the first dissolve never stutters.
+  useEffect(() => {
+    FRAMES.forEach(({ src }) => {
+      const img = new Image();
+      img.src = src;
+      img.decode?.().catch(() => undefined);
+    });
+  }, []);
 
-      <motion.img
-        src="/images/courtyard-rangoli-farther-3.png"
-        alt="The grand palace illuminated for Diwali"
-        className="scene4-image"
-        style={{ opacity: image4Opacity, scale: imageScale }}
-        draggable={false}
-      />
-
-      <div className="scene4-shade" />
-    </motion.div>
+  return (
+    <div className="scene4-container">
+      {FRAMES.map((frame) => (
+        <Frame key={frame.src} frame={frame} progress={progress} />
+      ))}
+      <motion.div className="scene4-shade" style={{ opacity: shadeOpacity }} />
+    </div>
   );
 }

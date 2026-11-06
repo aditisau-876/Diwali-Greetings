@@ -1,10 +1,12 @@
+/* Scene 4 — the courtyard pulls back to reveal the palace. */
+
 .scene4-container {
   position: absolute;
   inset: 0;
   z-index: 20;
   overflow: hidden;
   pointer-events: none;
-  background: #080604;
+  /* transparent on purpose: Scene 2 must stay visible until frame 1 dissolves in */
 }
 
 .scene4-image {
@@ -14,7 +16,10 @@
   height: 100%;
   object-fit: cover;
   user-select: none;
+  opacity: 0;
+  transform-origin: 50% 60%;
   will-change: opacity, transform;
+  backface-visibility: hidden;
 }
 
 .scene4-shade {
@@ -22,14 +27,6 @@
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(
-      ellipse at 50% 50%,
-      transparent 45%,
-      rgba(5, 3, 2, 0.35) 100%
-    ),
-    linear-gradient(
-      to top,
-      rgba(5, 3, 2, 0.25),
-      transparent 35%
-    );
+    radial-gradient(ellipse at 50% 50%, transparent 45%, rgba(5, 3, 2, 0.35) 100%),
+    linear-gradient(to top, rgba(5, 3, 2, 0.25), transparent 35%);
 }
