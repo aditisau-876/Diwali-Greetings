@@ -1,0 +1,38 @@
+/* Scene 5 — fireworks over the palace. The images beneath come from Scene 4;
+   everything that bursts here is drawn live in code. */
+
+.scene5 {
+  position: absolute;
+  inset: 0;
+  z-index: 21;
+  pointer-events: none;
+}
+
+.scene5-sky {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to bottom, rgba(4, 3, 16, 0.5), rgba(4, 3, 16, 0.12) 60%, transparent 85%);
+}
+
+.scene5-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}
+
+.scene5-caption {
+  position: absolute;
+  left: 0;
+  bottom: 9%;
+  width: 100%;
+  padding: 0 24px;
+  text-align: center;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(22px, 2.6vw, 34px);
+  color: #fff0d9;
+  text-shadow: 0 2px 22px rgba(0, 0, 0, 0.85);
+}
