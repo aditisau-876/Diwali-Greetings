@@ -9,6 +9,8 @@ import {
     useTransform,
 } from "framer-motion";
 
+import AuthGate from "./components/auth/AuthGate";
+
 import Scene1 from "./scenes/Scene1/Scene1";
 import Scene2 from "./scenes/Scene2/Scene2";
 import Scene4 from "./scenes/Scene4/Scene4";
@@ -169,9 +171,11 @@ export default function App() {
                 <Scene6 message="May this Diwali bring happiness, prosperity and endless light into your life." />
             </section>
 
-            {/* SCENE 7 - personal greeting creator */}
+            {/* SIGN IN + SCENE 7 */}
             <section className="greeting-section" id="greeting">
-                <GreetingCreator />
+                <AuthGate>
+                    {(user) => <GreetingCreator user={user} />}
+                </AuthGate>
             </section>
         </main>
     );
