@@ -1,0 +1,42 @@
+.sound-toggle {
+  position: fixed;
+  z-index: 1000;
+  left: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0 11px;
+  justify-content: center;
+  font: 500 12px/1 "Manrope", system-ui, sans-serif;
+  color: #f1e7d6;
+  cursor: pointer;
+  background: rgba(13, 9, 7, 0.72);
+  border: 1px solid rgba(201, 164, 92, 0.4);
+  border-radius: 999px;
+  backdrop-filter: blur(6px);
+  transition: border-color 0.3s ease, background 0.3s ease;
+}
+
+.sound-toggle:hover {
+  border-color: #c9a45c;
+  background: rgba(13, 9, 7, 0.9);
+}
+
+.sound-toggle.is-prompting {
+  animation: soundPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes soundPulse {
+  50% {
+    box-shadow: 0 0 0 6px rgba(201, 164, 92, 0.16);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sound-toggle.is-prompting {
+    animation: none;
+  }
+}

@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -17,16 +16,14 @@ import {
   type User,
 } from "firebase/auth";
 
+import { auth, googleProvider } from "../../firebase/firebase";
 import {
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  onSnapshot,
-  serverTimestamp,
-} from "firebase/firestore";
-
-import { auth, googleProvider, db } from "../../firebase/firebase";
+  deleteGreeting,
+  greetingKey,
+  saveGreeting,
+  subscribeToGreetings,
+} from "../../services/greetingService";
+import type { SavedGreeting } from "../../services/greetingService";
 
 import EnvelopeReveal from "./EnvelopeReveal";
 import GreetingCard from "./GreetingCard";
@@ -48,13 +45,15 @@ const rise = {
   transition: { duration: 0.8, ease: [0.22, 1, 0.36, 1] as const },
 };
 
-type SavedGreeting = {
-  id: string;
-  greeting: GreetingData;
-  createdAt?: {
-    toMillis: () => number;
-  } | null;
-};
+function errorCode(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error
+    ? String((error as { code: unknown }).code)
+    : "";
+}
+
+function errorName(error: unknown) {
+  return error instanceof Error ? error.name : "";
+}
 
 export default function GreetingCreator() {
   const [greeting, setGreeting] = useState<GreetingData>(defaultGreeting);
@@ -63,19 +62,24 @@ export default function GreetingCreator() {
   const [authLoading, setAuthLoading] = useState(true);
 
   const [showEnvelope, setShowEnvelope] = useState(false);
-
-  const [busy, setBusy] = useState<
-    "download" | "share" | "save" | null
-  >(null);
-
+  const [busy, setBusy] = useState<"download" | "share" | "save" | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const [savedCards, setSavedCards] = useState<SavedGreeting[]>([]);
   const [cardsLoading, setCardsLoading] = useState(false);
 
+  const studioRef = useRef<HTMLDivElement>(null);
   const exportRef = useRef<HTMLDivElement>(null);
-  const cache = useRef<{ key: string; url: string } | null>(null);
   const toastTimer = useRef<number | null>(null);
+
+  // One render of the PNG is shared by Download and Share.
+  const cache = useRef<{ key: string; promise: Promise<string> } | null>(null);
+
+  // A save that is waiting for the visitor to finish signing in.
+  const pendingSave = useRef<GreetingData | null>(null);
+  const pendingTimers = useRef<number[]>([]);
+  const savedKeys = useRef<Set<string>>(new Set());
+  const sawFirstAuth = useRef(false);
 
   const updateGreeting = (updated: Partial<GreetingData>) => {
     setGreeting((prev) => ({ ...prev, ...updated }));
@@ -83,63 +87,96 @@ export default function GreetingCreator() {
 
   const say = useCallback((message: string) => {
     setToast(message);
-
-    if (toastTimer.current) {
-      window.clearTimeout(toastTimer.current);
-    }
-
-    toastTimer.current = window.setTimeout(
-      () => setToast(null),
-      3200
-    );
+    if (toastTimer.current) window.clearTimeout(toastTimer.current);
+    toastTimer.current = window.setTimeout(() => setToast(null), 3200);
   }, []);
 
   useEffect(
     () => () => {
-      if (toastTimer.current) {
-        window.clearTimeout(toastTimer.current);
-      }
+      if (toastTimer.current) window.clearTimeout(toastTimer.current);
+      pendingTimers.current.forEach((t) => window.clearTimeout(t));
     },
-    []
+    [],
   );
 
-  // Check whether the visitor is already signed in.
+  /* ------------------------------------------------------------------
+     Saving
+  ------------------------------------------------------------------ */
+
+  const persist = useCallback(
+    async (uid: string, data: GreetingData) => {
+      if (savedKeys.current.has(greetingKey(data))) {
+        say("This card is already in your collection.");
+        setBusy(null);
+        return;
+      }
+
+      setBusy("save");
+      try {
+        const result = await saveGreeting(uid, data);
+        say(
+          result === "saved"
+            ? "Your greeting card has been saved."
+            : "You seem to be offline. Your card will be saved when you reconnect.",
+        );
+      } catch (error) {
+        console.error("Saving greeting failed:", error);
+        say(
+          errorCode(error) === "permission-denied"
+            ? "Saving isn't allowed yet. Please check your Firestore rules."
+            : "Could not save your card. Please try again.",
+        );
+      } finally {
+        setBusy(null);
+      }
+    },
+    [say],
+  );
+
+  const clearPending = useCallback(() => {
+    pendingSave.current = null;
+    pendingTimers.current.forEach((t) => window.clearTimeout(t));
+    pendingTimers.current = [];
+  }, []);
+
+  // Firebase tells us when sign-in really finishes. We finish a waiting save
+  // from here, rather than from the sign-in pop-up's promise, which can stay
+  // unresolved in some browsers even though the visitor is signed in.
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
+
+      const isFirst = !sawFirstAuth.current;
+      sawFirstAuth.current = true;
+
+      if (!currentUser) return;
+
+      const waiting = pendingSave.current;
+      if (waiting) {
+        clearPending();
+        void persist(currentUser.uid, waiting);
+      } else if (!isFirst) {
+        say("Signed in. You can now save your greetings.");
+      }
     });
-
     return unsubscribe;
-  }, []);
+  }, [persist, clearPending, say]);
 
-  // Load saved cards only when a user is signed in.
+  // Load saved cards only while someone is signed in.
   useEffect(() => {
     if (!user) {
       setSavedCards([]);
+      savedKeys.current = new Set();
       setCardsLoading(false);
       return;
     }
 
     setCardsLoading(true);
-
-    const cardsRef = collection(db, "users", user.uid, "cards");
-
-    const unsubscribe = onSnapshot(
-      cardsRef,
-      (snapshot) => {
-        const cards: SavedGreeting[] = snapshot.docs.map((item) => ({
-          id: item.id,
-          greeting: item.data().greeting as GreetingData,
-          createdAt: item.data().createdAt ?? null,
-        }));
-
-        cards.sort(
-          (a, b) =>
-            (b.createdAt?.toMillis() ?? 0) -
-            (a.createdAt?.toMillis() ?? 0)
-        );
-
+    const unsubscribe = subscribeToGreetings(
+      user.uid,
+      (cards) => {
+        savedKeys.current = new Set(cards.map((c) => greetingKey(c.greeting)));
         setSavedCards(cards);
         setCardsLoading(false);
       },
@@ -147,11 +184,26 @@ export default function GreetingCreator() {
         console.error("Unable to load saved cards:", error);
         setCardsLoading(false);
         say("Unable to load your saved cards. Please try again.");
-      }
+      },
     );
-
     return unsubscribe;
   }, [user, say]);
+
+  const explainSignInError = useCallback(
+    (error: unknown) => {
+      const code = errorCode(error);
+      if (code === "auth/cancelled-popup-request") return; // a second click; ignore
+      if (code === "auth/popup-closed-by-user") say("Sign-in was cancelled.");
+      else if (code === "auth/popup-blocked")
+        say("Your browser blocked the sign-in pop-up. Please allow pop-ups and try again.");
+      else if (code === "auth/unauthorized-domain")
+        say("This website's address isn't authorised for sign-in yet.");
+      else if (code === "auth/network-request-failed")
+        say("No connection. Please check your internet and try again.");
+      else say("Unable to complete sign-in. Please try again.");
+    },
+    [say],
+  );
 
   // Sign in or sign out from the account button.
   const handleAccountAction = async () => {
@@ -160,90 +212,63 @@ export default function GreetingCreator() {
         await signOut(auth);
         say("You have been signed out.");
       } else {
+        // The "Signed in" message comes from the auth listener above.
         await signInWithPopup(auth, googleProvider);
-        say("Welcome! You can now save your greetings.");
       }
     } catch (error) {
       console.error("Account action failed:", error);
-
-      const code =
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error
-          ? String(error.code)
-          : "";
-
-      if (code === "auth/popup-closed-by-user") {
-        say("Sign-in was cancelled.");
-      } else {
-        say("Unable to complete sign-in. Please try again.");
-      }
+      explainSignInError(error);
     }
   };
 
-  // Create a PNG from the dedicated, untransformed card.
-  const getPng = async () => {
-    const key = JSON.stringify(greeting);
-
-    if (cache.current?.key === key) {
-      return cache.current.url;
-    }
-
-    const node = exportRef.current?.firstElementChild as HTMLElement | null;
-
-    if (!node) {
-      throw new Error("Export card missing");
-    }
-
-    const url = await renderCardPng(node);
-
-    cache.current = { key, url };
-
-    return url;
-  };
-
-  // Save the current greeting. Ask for Google sign-in if necessary.
+  // Save the current greeting. Asks for Google sign-in first if necessary.
   const saveCard = async () => {
+    if (busy) return;
+
+    const current = auth.currentUser;
+    if (current) {
+      await persist(current.uid, greeting);
+      return;
+    }
+
+    // Remember what to save, then sign in. The auth listener finishes the job.
+    clearPending();
+    pendingSave.current = greeting;
     setBusy("save");
+    say("Sign in with Google to save your greeting.");
+
+    // Safety net 1: the pop-up was closed without signing in.
+    const onFocus = () => {
+      pendingTimers.current.push(
+        window.setTimeout(() => {
+          if (pendingSave.current && !auth.currentUser) {
+            clearPending();
+            setBusy(null);
+            say("Sign-in didn't finish. Your greeting is still here.");
+          }
+        }, 4000),
+      );
+    };
+    window.addEventListener("focus", onFocus, { once: true });
+
+    // Safety net 2: never stay on "Saving..." for more than two minutes.
+    pendingTimers.current.push(
+      window.setTimeout(() => {
+        if (pendingSave.current) {
+          clearPending();
+          setBusy(null);
+        }
+      }, 120000),
+    );
 
     try {
-      let currentUser = auth.currentUser;
-
-      if (!currentUser) {
-        say("Sign in with Google to save your greeting.");
-
-        const result = await signInWithPopup(auth, googleProvider);
-
-        currentUser = result.user;
-        setUser(currentUser);
-      }
-
-      await addDoc(
-        collection(db, "users", currentUser.uid, "cards"),
-        {
-          greeting,
-          createdAt: serverTimestamp(),
-        }
-      );
-
-      say("Your greeting card has been saved successfully!");
+      await signInWithPopup(auth, googleProvider);
     } catch (error) {
-      console.error("Saving greeting failed:", error);
-
-      const code =
-        typeof error === "object" &&
-        error !== null &&
-        "code" in error
-          ? String(error.code)
-          : "";
-
-      if (code === "auth/popup-closed-by-user") {
-        say("Sign-in was cancelled. Your greeting is still here.");
-      } else {
-        say("Could not save your card. Please try again.");
-      }
-    } finally {
+      console.error("Sign-in for saving failed:", error);
+      window.removeEventListener("focus", onFocus);
+      clearPending();
       setBusy(null);
+      explainSignInError(error);
     }
   };
 
@@ -253,11 +278,7 @@ export default function GreetingCreator() {
     cache.current = null;
     setShowEnvelope(false);
 
-    window.scrollTo({
-      top: document.getElementById("greeting")?.offsetTop ?? 0,
-      behavior: "smooth",
-    });
-
+    studioRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     say("Your saved greeting is ready to edit.");
   };
 
@@ -266,16 +287,12 @@ export default function GreetingCreator() {
     if (!user) return;
 
     const confirmed = window.confirm(
-      "Are you sure you want to delete this saved greeting?"
+      "Are you sure you want to delete this saved greeting?",
     );
-
     if (!confirmed) return;
 
     try {
-      await deleteDoc(
-        doc(db, "users", user.uid, "cards", cardId)
-      );
-
+      await deleteGreeting(user.uid, cardId);
       say("Saved greeting deleted.");
     } catch (error) {
       console.error("Deleting greeting failed:", error);
@@ -283,20 +300,46 @@ export default function GreetingCreator() {
     }
   };
 
+  /* ------------------------------------------------------------------
+     Download + share
+  ------------------------------------------------------------------ */
+
+  // Create a PNG from the dedicated, untransformed card.
+  const getPng = useCallback(() => {
+    const key = JSON.stringify(greeting);
+    if (cache.current?.key === key) return cache.current.promise;
+
+    const node = exportRef.current?.firstElementChild as HTMLElement | null;
+    if (!node) return Promise.reject(new Error("Export card missing"));
+
+    const promise = renderCardPng(node);
+    cache.current = { key, promise };
+    promise.catch(() => {
+      if (cache.current?.promise === promise) cache.current = null;
+    });
+    return promise;
+  }, [greeting]);
+
+  // Prepare the image shortly after the envelope opens, so Download and Share
+  // react instantly. (Browsers only allow sharing right after a tap.)
+  useEffect(() => {
+    if (!showEnvelope) return;
+    const t = window.setTimeout(() => {
+      getPng().catch(() => undefined);
+    }, 2200);
+    return () => window.clearTimeout(t);
+  }, [showEnvelope, getPng]);
+
   const download = async () => {
     setBusy("download");
-
     try {
       const url = await getPng();
-
       const a = document.createElement("a");
       a.href = url;
       a.download = fileNameFor(greeting.recipient);
-
       document.body.appendChild(a);
       a.click();
       a.remove();
-
       say("Image saved.");
     } catch (error) {
       console.error("Greeting download failed:", error);
@@ -308,15 +351,12 @@ export default function GreetingCreator() {
 
   const share = async () => {
     setBusy("share");
-
     const text = `A Diwali greeting for you: ${greeting.message}`;
 
     try {
       let file: File | null = null;
-
       try {
         const blob = await (await fetch(await getPng())).blob();
-
         file = new File([blob], fileNameFor(greeting.recipient), {
           type: "image/png",
         });
@@ -325,26 +365,26 @@ export default function GreetingCreator() {
       }
 
       if (file && navigator.canShare?.({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "Happy Diwali",
-          text,
-        });
+        await navigator.share({ files: [file], title: "Happy Diwali", text });
       } else if (navigator.share) {
         await navigator.share({
           title: "Happy Diwali",
           text,
           url: window.location.href,
         });
-      } else {
-        await navigator.clipboard.writeText(
-          `${text}\n${window.location.href}`
-        );
-
+      } else if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(`${text}\n${window.location.href}`);
         say("Copied to your clipboard.");
+      } else {
+        say("Sharing isn’t available here. Try downloading instead.");
       }
     } catch (error) {
-      if (error instanceof Error && error.name !== "AbortError") {
+      const name = errorName(error);
+      if (name === "AbortError") return; // the visitor closed the share sheet
+      if (name === "NotAllowedError") {
+        // The browser wants a fresh tap; the image is now ready, so the next one is instant.
+        say("Your image is ready. Tap Share once more.");
+      } else {
         console.error("Sharing failed:", error);
         say("Sharing isn’t available here. Try downloading instead.");
       }
@@ -392,7 +432,7 @@ export default function GreetingCreator() {
         </p>
       </motion.header>
 
-      <div className="studio">
+      <div className="studio" ref={studioRef}>
         <div className="studio-controls">
           <motion.section {...rise}>
             <GreetingEditor
