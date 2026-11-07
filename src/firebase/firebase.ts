@@ -1,4 +1,3 @@
-
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -17,5 +16,7 @@ const app = initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
 export const googleProvider = new GoogleAuthProvider();
+// Always let the visitor choose which Google account to use.
+googleProvider.setCustomParameters({ prompt: "select_account" });
 export const db = getFirestore(app);
 export const storage = getStorage(app);

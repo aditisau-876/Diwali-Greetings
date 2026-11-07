@@ -2,11 +2,13 @@ import { useCallback, useEffect, useRef } from "react";
 import { useMotionValueEvent } from "framer-motion";
 import type { MotionValue } from "framer-motion";
 import { PHASE } from "../lib/journey";
+import { isMuted, useMuted } from "../lib/sound";
 
 // Put the file in  public/audio/  (change the name here if yours differs).
 const SRC = "/audio/fireworks.mp3";
 const MAX_VOLUME = 0.7; // 0 – 1
 const FADE_OUT = [0.945, 0.99] as const; // fades away while Scene 5 hands over to Scene 6
+const GESTURES = ["pointerdown", "pointerup", "click", "touchend", "keydown"] as const;
 
 const clamp01 = (x: number) => Math.min(1, Math.max(0, x));
 const smooth = (x: number) => {
@@ -31,6 +33,7 @@ interface Props {
 export default function FireworksAudio({ progress, duck }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null);
   const blocked = useRef(false);
+  const muted = useMuted();
 
   const apply = useCallback(
     (p: number) => {
@@ -38,13 +41,15 @@ export default function FireworksAudio({ progress, duck }: Props) {
       if (!audio) return;
 
       const level = levelAt(p);
-      duck?.set(level);
+      // The music only ducks if the fireworks are actually audible.
+      duck?.set(isMuted() ? 0 : level);
+      audio.muted = isMuted();
       audio.volume = clamp01(MAX_VOLUME * level);
 
       if (level > 0.01) {
         if (audio.paused && !blocked.current && !document.hidden) {
           audio.play().catch(() => {
-            // Autoplay was refused; try again after the next tap or key press.
+            // Autoplay was refused; try again after the next real gesture.
             blocked.current = true;
           });
         }
@@ -58,6 +63,11 @@ export default function FireworksAudio({ progress, duck }: Props) {
 
   useMotionValueEvent(progress, "change", apply);
 
+  // Re-apply straight away when the sound switch changes.
+  useEffect(() => {
+    apply(progress.get());
+  }, [muted, apply, progress]);
+
   useEffect(() => {
     apply(progress.get());
 
@@ -70,16 +80,14 @@ export default function FireworksAudio({ progress, duck }: Props) {
       else apply(progress.get());
     };
 
-    document.addEventListener("click", retry);
-    document.addEventListener("touchstart", retry);
-    document.addEventListener("keydown", retry);
+    GESTURES.forEach((g) =>
+      document.addEventListener(g, retry, { passive: true }),
+    );
     document.addEventListener("visibilitychange", onVisibility);
 
     const audio = audioRef.current;
     return () => {
-      document.removeEventListener("click", retry);
-      document.removeEventListener("touchstart", retry);
-      document.removeEventListener("keydown", retry);
+      GESTURES.forEach((g) => document.removeEventListener(g, retry));
       document.removeEventListener("visibilitychange", onVisibility);
       audio?.pause();
       duck?.set(0);

@@ -48,18 +48,26 @@ export default function EnvelopeReveal({
   const timer = useRef<number | null>(null);
   const k = useFitScale();
 
+  // Keep the latest onClose without re-running the effect below. Re-running it
+  // (a parent re-render is enough) used to cancel the opening timer, leaving
+  // the envelope stuck half-open.
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   // Lock page scroll while the overlay is open; Escape closes it.
   useEffect(() => {
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
-    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onCloseRef.current();
     window.addEventListener("keydown", onKey);
     return () => {
       document.body.style.overflow = prev;
       window.removeEventListener("keydown", onKey);
       if (timer.current) window.clearTimeout(timer.current);
     };
-  }, [onClose]);
+  }, []);
 
   const open = () => {
     if (phase !== "closed") return;
