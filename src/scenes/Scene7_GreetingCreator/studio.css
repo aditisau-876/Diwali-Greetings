@@ -515,3 +515,36 @@
   }
 
 }
+
+
+
+/* Account and navigation buttons */
+
+.creator-nav-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.account-button {
+  color: #e6c680;
+  border: 1px solid rgba(201, 164, 92, 0.3);
+  padding: 9px 13px;
+  border-radius: 4px;
+}
+
+.account-button:hover {
+  background: rgba(201, 164, 92, 0.1);
+}
+
+@media (max-width: 600px) {
+  .creator-nav-actions {
+    gap: 8px;
+  }
+
+  .creator-nav-actions .back-button {
+    font-size: 11px;
+  }
+}

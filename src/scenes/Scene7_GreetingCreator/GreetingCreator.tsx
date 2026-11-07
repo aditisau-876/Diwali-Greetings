@@ -1,8 +1,22 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowUp, Bookmark, Trash2, FolderOpen } from "lucide-react";
-import type { User } from "firebase/auth";
+import {
+  ArrowUp,
+  Bookmark,
+  Trash2,
+  FolderOpen,
+  LogIn,
+  LogOut,
+} from "lucide-react";
+
+import {
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+  type User,
+} from "firebase/auth";
+
 import {
   addDoc,
   collection,
@@ -12,7 +26,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 
-import { db } from "../../firebase/firebase";
+import { auth, googleProvider, db } from "../../firebase/firebase";
 
 import EnvelopeReveal from "./EnvelopeReveal";
 import GreetingCard from "./GreetingCard";
@@ -42,17 +56,22 @@ type SavedGreeting = {
   } | null;
 };
 
-type GreetingCreatorProps = {
-  user: User;
-};
-
-export default function GreetingCreator({ user }: GreetingCreatorProps) {
+export default function GreetingCreator() {
   const [greeting, setGreeting] = useState<GreetingData>(defaultGreeting);
+
+  const [user, setUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [showEnvelope, setShowEnvelope] = useState(false);
-  const [busy, setBusy] = useState<"download" | "share" | "save" | null>(null);
+
+  const [busy, setBusy] = useState<
+    "download" | "share" | "save" | null
+  >(null);
+
   const [toast, setToast] = useState<string | null>(null);
+
   const [savedCards, setSavedCards] = useState<SavedGreeting[]>([]);
-  const [cardsLoading, setCardsLoading] = useState(true);
+  const [cardsLoading, setCardsLoading] = useState(false);
 
   const exportRef = useRef<HTMLDivElement>(null);
   const cache = useRef<{ key: string; url: string } | null>(null);
@@ -64,19 +83,44 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
 
   const say = useCallback((message: string) => {
     setToast(message);
-    if (toastTimer.current) window.clearTimeout(toastTimer.current);
-    toastTimer.current = window.setTimeout(() => setToast(null), 3200);
+
+    if (toastTimer.current) {
+      window.clearTimeout(toastTimer.current);
+    }
+
+    toastTimer.current = window.setTimeout(
+      () => setToast(null),
+      3200
+    );
   }, []);
 
   useEffect(
     () => () => {
-      if (toastTimer.current) window.clearTimeout(toastTimer.current);
+      if (toastTimer.current) {
+        window.clearTimeout(toastTimer.current);
+      }
     },
-    [],
+    []
   );
 
-  // Listen for this user's saved greetings in Firestore.
+  // Check whether the visitor is already signed in.
   useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
+    return unsubscribe;
+  }, []);
+
+  // Load saved cards only when a user is signed in.
+  useEffect(() => {
+    if (!user) {
+      setSavedCards([]);
+      setCardsLoading(false);
+      return;
+    }
+
     setCardsLoading(true);
 
     const cardsRef = collection(db, "users", user.uid, "cards");
@@ -93,7 +137,7 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
         cards.sort(
           (a, b) =>
             (b.createdAt?.toMillis() ?? 0) -
-            (a.createdAt?.toMillis() ?? 0),
+            (a.createdAt?.toMillis() ?? 0)
         );
 
         setSavedCards(cards);
@@ -103,11 +147,39 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
         console.error("Unable to load saved cards:", error);
         setCardsLoading(false);
         say("Unable to load your saved cards. Please try again.");
-      },
+      }
     );
 
     return unsubscribe;
-  }, [user.uid, say]);
+  }, [user, say]);
+
+  // Sign in or sign out from the account button.
+  const handleAccountAction = async () => {
+    try {
+      if (user) {
+        await signOut(auth);
+        say("You have been signed out.");
+      } else {
+        await signInWithPopup(auth, googleProvider);
+        say("Welcome! You can now save your greetings.");
+      }
+    } catch (error) {
+      console.error("Account action failed:", error);
+
+      const code =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error
+          ? String(error.code)
+          : "";
+
+      if (code === "auth/popup-closed-by-user") {
+        say("Sign-in was cancelled.");
+      } else {
+        say("Unable to complete sign-in. Please try again.");
+      }
+    }
+  };
 
   // Create a PNG from the dedicated, untransformed card.
   const getPng = async () => {
@@ -124,25 +196,52 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
     }
 
     const url = await renderCardPng(node);
+
     cache.current = { key, url };
 
     return url;
   };
 
-  // Save the greeting data to the signed-in user's Firestore collection.
+  // Save the current greeting. Ask for Google sign-in if necessary.
   const saveCard = async () => {
     setBusy("save");
 
     try {
-      await addDoc(collection(db, "users", user.uid, "cards"), {
-        greeting,
-        createdAt: serverTimestamp(),
-      });
+      let currentUser = auth.currentUser;
 
-      say("Your greeting card has been saved!");
+      if (!currentUser) {
+        say("Sign in with Google to save your greeting.");
+
+        const result = await signInWithPopup(auth, googleProvider);
+
+        currentUser = result.user;
+        setUser(currentUser);
+      }
+
+      await addDoc(
+        collection(db, "users", currentUser.uid, "cards"),
+        {
+          greeting,
+          createdAt: serverTimestamp(),
+        }
+      );
+
+      say("Your greeting card has been saved successfully!");
     } catch (error) {
       console.error("Saving greeting failed:", error);
-      say("Could not save your card. Please try again.");
+
+      const code =
+        typeof error === "object" &&
+        error !== null &&
+        "code" in error
+          ? String(error.code)
+          : "";
+
+      if (code === "auth/popup-closed-by-user") {
+        say("Sign-in was cancelled. Your greeting is still here.");
+      } else {
+        say("Could not save your card. Please try again.");
+      }
     } finally {
       setBusy(null);
     }
@@ -164,14 +263,19 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
 
   // Delete a greeting from the current user's collection.
   const removeCard = async (cardId: string) => {
+    if (!user) return;
+
     const confirmed = window.confirm(
-      "Are you sure you want to delete this saved greeting?",
+      "Are you sure you want to delete this saved greeting?"
     );
 
     if (!confirmed) return;
 
     try {
-      await deleteDoc(doc(db, "users", user.uid, "cards", cardId));
+      await deleteDoc(
+        doc(db, "users", user.uid, "cards", cardId)
+      );
+
       say("Saved greeting deleted.");
     } catch (error) {
       console.error("Deleting greeting failed:", error);
@@ -184,8 +288,8 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
 
     try {
       const url = await getPng();
-      const a = document.createElement("a");
 
+      const a = document.createElement("a");
       a.href = url;
       a.download = fileNameFor(greeting.recipient);
 
@@ -234,8 +338,9 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
         });
       } else {
         await navigator.clipboard.writeText(
-          `${text}\n${window.location.href}`,
+          `${text}\n${window.location.href}`
         );
+
         say("Copied to your clipboard.");
       }
     } catch (error) {
@@ -253,20 +358,34 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
       <nav className="creator-nav">
         <span className="creator-logo">A Light Within</span>
 
-        <button
-          className="back-button"
-          type="button"
-          onClick={() =>
-            window.scrollTo({ top: 0, behavior: "smooth" })
-          }
-        >
-          <ArrowUp size={15} />
-          Back to the story
-        </button>
+        <div className="creator-nav-actions">
+          <button
+            className="back-button"
+            type="button"
+            onClick={() =>
+              window.scrollTo({ top: 0, behavior: "smooth" })
+            }
+          >
+            <ArrowUp size={15} />
+            Back to the story
+          </button>
+
+          {!authLoading && (
+            <button
+              className="back-button account-button"
+              type="button"
+              onClick={handleAccountAction}
+            >
+              {user ? <LogOut size={15} /> : <LogIn size={15} />}
+              {user ? "Sign out" : "Sign in to save cards"}
+            </button>
+          )}
+        </div>
       </nav>
 
       <motion.header className="creator-header" {...rise}>
         <h1>Send a light of your own.</h1>
+
         <p>
           Write a few words, choose a design, and we’ll fold it into a greeting
           you can save or share.
@@ -310,7 +429,11 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
             disabled={busy !== null}
           >
             <Bookmark size={17} />
-            {busy === "save" ? "Saving..." : "Save this card"}
+            {busy === "save"
+              ? "Saving..."
+              : user
+                ? "Save this card"
+                : "Sign in to save this card"}
           </button>
         </motion.aside>
       </div>
@@ -321,21 +444,54 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
           <div>
             <p className="preview-label">YOUR PERSONAL COLLECTION</p>
             <h2>My Saved Cards</h2>
-            <p>Return to the greetings you've created and saved.</p>
+
+            <p>
+              Return to the greetings you've created and saved.
+            </p>
           </div>
 
-          <span className="saved-card-count">
-            {savedCards.length}{" "}
-            {savedCards.length === 1 ? "card" : "cards"}
-          </span>
+          {user && (
+            <span className="saved-card-count">
+              {savedCards.length}{" "}
+              {savedCards.length === 1 ? "card" : "cards"}
+            </span>
+          )}
         </div>
 
-        {cardsLoading ? (
-          <p className="saved-cards-message">Loading your saved cards...</p>
+        {authLoading ? (
+          <p className="saved-cards-message">
+            Checking your account...
+          </p>
+        ) : !user ? (
+          <div className="saved-cards-empty">
+            <FolderOpen size={32} />
+
+            <h3>Your collection is waiting.</h3>
+
+            <p>
+              You can create and download greetings without signing in.
+              Sign in with Google whenever you want to save your cards here.
+            </p>
+
+            <button
+              className="btn btn-primary"
+              type="button"
+              onClick={handleAccountAction}
+            >
+              <LogIn size={16} />
+              Sign in with Google
+            </button>
+          </div>
+        ) : cardsLoading ? (
+          <p className="saved-cards-message">
+            Loading your saved cards...
+          </p>
         ) : savedCards.length === 0 ? (
           <div className="saved-cards-empty">
             <FolderOpen size={32} />
+
             <h3>Your collection is waiting.</h3>
+
             <p>
               Create a Diwali greeting and select Save this card to keep it
               here.
@@ -386,7 +542,11 @@ export default function GreetingCreator({ user }: GreetingCreatorProps) {
         {showEnvelope && (
           <EnvelopeReveal
             greeting={greeting}
-            busy={busy === "download" || busy === "share" ? busy : null}
+            busy={
+              busy === "download" || busy === "share"
+                ? busy
+                : null
+            }
             onClose={() => setShowEnvelope(false)}
             onDownload={download}
             onShare={share}

@@ -1,3 +1,4 @@
+
 import { useRef, useState } from "react";
 import {
     motion,
@@ -8,8 +9,6 @@ import {
     useSpring,
     useTransform,
 } from "framer-motion";
-
-import AuthGate from "./components/auth/AuthGate";
 
 import Scene1 from "./scenes/Scene1/Scene1";
 import Scene2 from "./scenes/Scene2/Scene2";
@@ -57,20 +56,36 @@ export default function App() {
         const temple = v < PHASE.crossfade[1] + 0.12;
         const diya = v < PHASE.diyaOut[1] + 0.05;
         const fireworks = v > PHASE.img4[0] - 0.04;
+
         setTempleLive((prev) => (prev === temple ? prev : temple));
         setDiyaLive((prev) => (prev === diya ? prev : diya));
         setFireworksLive((prev) => (prev === fireworks ? prev : fireworks));
     });
 
-    const templeOpacity = useTransform(progress, [...PHASE.crossfade], [1, 0]);
+    const templeOpacity = useTransform(
+        progress,
+        [...PHASE.crossfade],
+        [1, 0]
+    );
+
     const templeScale = useTransform(
         progress,
         [0, PHASE.crossfade[1]],
         [1, 1.06]
     );
 
-    const titleOpacity = useTransform(progress, [...PHASE.titleOut], [1, 0]);
-    const titleY = useTransform(progress, [...PHASE.titleOut], [0, -24]);
+    const titleOpacity = useTransform(
+        progress,
+        [...PHASE.titleOut],
+        [1, 0]
+    );
+
+    const titleY = useTransform(
+        progress,
+        [...PHASE.titleOut],
+        [0, -24]
+    );
+
     const cueOpacity = useTransform(progress, [0, 0.012], [1, 0]);
 
     // The caption fades in on the rangoli and out again before Scene 4.
@@ -84,17 +99,31 @@ export default function App() {
         ],
         [0, 1, 1, 0]
     );
-    const captionY = useTransform(progress, [...PHASE.caption], [18, 0]);
+
+    const captionY = useTransform(
+        progress,
+        [...PHASE.caption],
+        [18, 0]
+    );
 
     // The 3D diya melts away before the palace images take over.
-    const diyaOpacity = useTransform(progress, [...PHASE.diyaOut], [1, 0]);
+    const diyaOpacity = useTransform(
+        progress,
+        [...PHASE.diyaOut],
+        [1, 0]
+    );
 
-    const exitFade = useTransform(progress, [...PHASE.exit], [0, 1]);
+    const exitFade = useTransform(
+        progress,
+        [...PHASE.exit],
+        [0, 1]
+    );
 
     return (
         <main className="experience">
             {/* Plays across the whole site */}
             <BackgroundMusic duck={duck} />
+
             {/* Plays only during Scene 5 and follows the scroll position */}
             <FireworksAudio progress={progress} duck={duck} />
 
@@ -171,11 +200,9 @@ export default function App() {
                 <Scene6 message="May this Diwali bring happiness, prosperity and endless light into your life." />
             </section>
 
-            {/* SIGN IN + SCENE 7 */}
+            {/* SCENE 7 - greeting creator; sign-in is optional */}
             <section className="greeting-section" id="greeting">
-                <AuthGate>
-                    {(user) => <GreetingCreator user={user} />}
-                </AuthGate>
+                <GreetingCreator />
             </section>
         </main>
     );
