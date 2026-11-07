@@ -2,18 +2,21 @@ import { useRef, useState } from "react";
 import {
     motion,
     useInView,
+    useMotionValue,
     useMotionValueEvent,
     useScroll,
     useSpring,
     useTransform,
 } from "framer-motion";
-import BackgroundMusic from "./components/BackgroundMusic";
+
 import Scene1 from "./scenes/Scene1/Scene1";
 import Scene2 from "./scenes/Scene2/Scene2";
 import Scene4 from "./scenes/Scene4/Scene4";
 import Scene5 from "./scenes/Scene5/Scene5";
 import Scene6 from "./scenes/Scene6/Scene6";
 
+import BackgroundMusic from "./components/BackgroundMusic";
+import FireworksAudio from "./components/FireworksAudio";
 import TravelingDiyaCanvas from "./scenes/Scene1/TravelingDiyaCanvas";
 import GreetingCreator from "./scenes/Scene7_GreetingCreator/GreetingCreator";
 
@@ -21,6 +24,9 @@ import { PHASE } from "./lib/journey";
 
 export default function App() {
     const journeyRef = useRef<HTMLDivElement>(null);
+
+    // 0 → 1 while the fireworks play; the background music dips by that much.
+    const duck = useMotionValue(0);
 
     const inView = useInView(journeyRef, {
         margin: "200px 0px 200px 0px",
@@ -85,7 +91,11 @@ export default function App() {
 
     return (
         <main className="experience">
-            <BackgroundMusic />
+            {/* Plays across the whole site */}
+            <BackgroundMusic duck={duck} />
+            {/* Plays only during Scene 5 and follows the scroll position */}
+            <FireworksAudio progress={progress} duck={duck} />
+
             {/* MAIN DIWALI JOURNEY: scenes 1, 2, 4 and 5 share one pinned stage */}
             <div ref={journeyRef} className="journey">
                 <div className="journey-stage">
